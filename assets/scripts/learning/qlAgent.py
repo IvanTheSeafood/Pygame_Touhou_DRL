@@ -15,15 +15,46 @@ class agent:
 
         self.state = agentState(player)#player pos,enemy pos, bullet pos, 
         self.newState = agentState(player)
-        self.action = [0, False] # 9 possible actions
+        self.action = [0, True] # 9 possible actions
         self.reward = 0
         self.terminal = False
 
         self.episode = mlData.episode
         self.q = mlData.Q
         self.ring = None
+
+    def qArr(self, qNN):
+        q=[]
+        for i in range(9):
+            #r = self.returnR()
+            q.append(qNN(self.state, i, self.newState, 1))
+        return q
     
-    def moveDirection(self, action=[4, False]):
+    def chooseAction(self, qNN):
+        
+        q = self.qArr(qNN)
+        bestActions=[n for n, v in enumerate(q) if v ==max(q)]    
+
+        if np.random.rand()< mlData.epsilon:                                                             
+            return np.random.randint(0,8)
+        elif len(bestActions)>1:                                                                
+            return np.random.choice(bestActions)
+        else:                                                                                   
+            return np.argmax(q)
+        
+    def returnR(self):
+
+        data=mlData
+        r = 1   #survive
+
+        if data.oldHp < data.hp:    #dead
+            r-=100
+
+        r += (data.points-data.oldPoints)/100   #points earned
+        
+        return r
+
+    def moveDirection(self):
  
         #Moving
         finalMove =[Vector2.up() + Vector2.left(),   Vector2.up(),   Vector2.up() + Vector2.right(),
@@ -31,10 +62,10 @@ class agent:
                     Vector2.down() + Vector2.left(), Vector2.down(), Vector2.down() + Vector2.right()] 
         
         #Shooting
-        if action[1] == True:
+        if self.action[1] == True:
             self.player.shoot()
             
-        return finalMove[action[0]]
+        return finalMove[self.action[0]]
 
 class agentState:
     def __init__(self, player):
@@ -81,14 +112,28 @@ class QNetwork(nn.Module):
         self.action_size = action_size
         
         # Define layers
-        self.fc1 = nn.Linear(state_size + action_size + state_size + 1, hidden_size)
+        # Adjust input size to match concatenated input
+        self.fc1 = nn.Linear(mlData.maxBullets + mlData.maxEnemies + 1 , hidden_size)
         self.fc2 = nn.Linear(hidden_size, 1)
     
-    def forward(self, state, action, new_state, reward):
+    def forward(self, stateClass, action, newStateClass, reward):
         # Concatenate inputs
-        x = torch.cat((state, action, new_state, reward), dim=1)
+        state = self.initState(stateClass)
+        new_state = self.initState(newStateClass)
+        # Concatenate action and reward (assuming action is a tensor)
+        action_reward = torch.cat((action, reward.unsqueeze(1)), dim=1)
+        x = torch.cat((state, action_reward, new_state), dim=1)  # Concatenate along dim=1
         
         # Forward pass through the network
         x = torch.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+    
+    def initState(self,stateClass):
+        state =[stateClass.playerCoord]
+        for i in range(mlData.maxEnemies):
+            state.append(stateClass.enemyCoord[i])
+        for i in range(mlData.maxBullets):
+            state.append(stateClass.bulletCoord[i])
+        print(state)
+        return state

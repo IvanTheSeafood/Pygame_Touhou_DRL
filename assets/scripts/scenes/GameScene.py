@@ -2,7 +2,8 @@ import numpy as np
 import pygame
 from pygame.locals import *
 import json
-import random
+import torch
+import torch.nn as nn
 
 from assets.scripts.classes.game_logic.BulletData import BulletData
 from assets.scripts.classes.game_logic.Enemy import Enemy
@@ -13,7 +14,7 @@ from assets.scripts.classes.hud_and_rendering.SpriteSheet import SpriteSheet
 from assets.scripts.math_and_data.Vector2 import Vector2
 from assets.scripts.classes.game_logic.AttackFunctions import AttackFunctions
 
-from assets.scripts.learning.qlAgent import agent, agentState
+from assets.scripts.learning.qlAgent import agent, QNetwork
 from assets.scripts.learning import mlData
 
 from assets.scripts.math_and_data.enviroment import *
@@ -61,7 +62,7 @@ class GameScene(Scene):
 
         self.agent = agent(self.player)
         self.agent.terminal = False
-        #self.agent.state = tuple(self.player.position.coords)
+        self.qNet = QNetwork(mlData.hiddenSize)
         self.agent.ring = Collider(mlData.proxyRange, self.player.position)
 
     def process_input(self, events):
@@ -86,7 +87,7 @@ class GameScene(Scene):
 
         else:
             if self.agent.terminal is False:
-                decision=self.agent.moveDirection([random.randint(0,8),random.choice([0,1])])
+                
                 '''
                 TD method, not working
                 action = self.agent.chooseAction(self.agent.state)   #[random.randint(0,8),True]
@@ -103,9 +104,15 @@ class GameScene(Scene):
                 self.agent.state = self.agent.newState
                 '''
                 #print(len(self.agent.q))
-                
-        self.player.move(decision)
-        
+                self.agent.action = [self.agent.chooseAction(self.qNet),True]
+                decision=self.agent.moveDirection()    #choose action
+                self.player.move(decision)                                                      #move player
+                self.agent.reward = self.agent.returnR()
+                qPredict = self.qNet(self.agent.state,self.agent.action,self.agent.newState, self.agent.reward)
+                qTarget = self.agent.reward +mlData.gamma*np.argmax(self.agent.qArr(self.qNet))
+                loss = nn.MSELoss()(qPredict, qTarget)
+                loss.backward()
+
         if pygame.key.get_pressed()[pygame.K_LSHIFT]:
             self.player.slow = True
         else:
@@ -255,7 +262,7 @@ class GameScene(Scene):
                 self.enemy_bullets.remove(bullet)
                 del bullet
             ebi +=1
-
+        
         self.player.update()
 
     @render_fps

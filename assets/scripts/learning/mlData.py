@@ -13,6 +13,7 @@ episode = 0
 
 position : Vector2 = Vector2(0,0)
 emptyCoord = np.array([-1,-1])
+hiddenSize =[3,3]
 maxBullets = 50
 maxEnemies = 10
 oldPoints = 0
