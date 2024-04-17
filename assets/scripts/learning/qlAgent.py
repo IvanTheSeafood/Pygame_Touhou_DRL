@@ -36,8 +36,6 @@ class agent:
             
         return finalMove[action[0]]
 
-
-    
 class agentState:
     def __init__(self, player):
         #self.playerPos=player.position
@@ -77,7 +75,7 @@ class agentState:
 
 class QNetwork(nn.Module):
 
-    def __init__(self, state_size, action_size, hidden_size):
+    def __init__(self, hidden_size, state_size= mlData.maxBullets + mlData.maxEnemies + 1, action_size=9):
         super(QNetwork, self).__init__()
         self.state_size = state_size
         self.action_size = action_size
