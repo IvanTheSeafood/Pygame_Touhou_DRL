@@ -1,13 +1,13 @@
 # Touhou Pygame AI
 * A project to train an AI to play a pygame version of the bullet hell shooter game: Touhou, with deep reinforcement learning
-* An individual project for fun turned into a school group project as the author's teamates couldn't figure out Pyboy but their RL project deadlines closing in
+* An individual project for fun turned into a school group project as the author`s teamates couldn`t figure out Pyboy but their RL project deadlines closing in
 
 ## Requirements
 Python 3.12, any version lower than that may cause errors (from personal experience)  
 
 ## Getting Started
 - Install the whole folder
-- Open the entire folder in VS Code (MAC users you're on your own)
+- Open the entire folder in VS Code (MAC users you`re on your own)
 - In the terminal input the command `pip install -r requirements.txt`
 - then also do `pip install -r pytorch` for neural network stuff.
 - If no errors were reported you should be good to go
@@ -15,8 +15,8 @@ Python 3.12, any version lower than that may cause errors (from personal experie
 
 ## Gameplay
 - Player moves up, down, left, right with arrow keys
-- player shoots with 'x' key
-- Player skips boring UI stuff with 'ENTER' key
+- player shoots with `x` key
+- Player skips boring UI stuff with `ENTER` key
 - Enemy spawns in waves and shoots at player
 - Player looses HP(max 4 per gameplay) and respawns at the bottom of the map if they get hit
 - Lose all HP and you get sent to the scoreboard
@@ -32,7 +32,7 @@ Python 3.12, any version lower than that may cause errors (from personal experie
     - 2. Update whatevers supposed to happen within the scene  
     - 3. Render the changes  
     - 4. Change to the next scene if necessary  
-- the OG code were the ones with 'active_scene.something()'  
+- the OG code were the ones with `active_scene.something()`  
 
 -  The gameplay is split into 3 different scenes:
 
@@ -40,7 +40,7 @@ Python 3.12, any version lower than that may cause errors (from personal experie
 - The first thing you see when you open the game
 
 ### GameScene
-- The actual place where the gameplay's happening
+- The actual place where the gameplay`s happening
 
 ### ScoreboardScene
 - The scene that tells you that you died and you suck  
@@ -48,7 +48,7 @@ Python 3.12, any version lower than that may cause errors (from personal experie
 These scenes keep looping indefinitely, but if RL is on, the game automatically restarts upon agent death.
 
 ## Reinforcement Learning
-The 'learning' Folder is created for reinforcement learning stuff.  Most of the stuff related to RL (vairables, classes, functions) can be found here.
+The `learning` Folder is created for reinforcement learning stuff.  Most of the stuff related to RL (vairables, classes, functions) can be found here.
 
 ### mlData.py
 This folder stores variables shared across multiple python scripts, which can be imported with:
@@ -57,16 +57,16 @@ and its variables can be called and updated with:
 `variable = mlData.[variable_name]` and `mlData.[variable_name]=value`
 
 #### Switches
-    - 'status', 'bool': True=enable RL, False=play regularly
-    - 'hitBoxStatus', 'bool': True=shows circle around player where the 50 closest bullets are accounted for
+    - `status`, `bool`: True=enable RL, False=play regularly
+    - `hitBoxStatus`, `bool`: True=shows circle around player where the 50 closest bullets are accounted for
 
 #### Average RL parameters
-    - 'alpha', 'int': learning rate
-    - 'epsilon', 'int': exploration rate
-    - 'gamma', 'int': decay rate
-    - 'terminal', 'bool': terminal state, since the game terminates on its own when hp reaches 0, this bool is considered obsolete 
-    - 'Q', 'empty': IDK wt to do with Q values yet
-    *That said, at the time of writing I'm still figuring out all the RL stuff so these parameters are never found in actual execution of this version of code*
+    - `alpha`, `int`: learning rate
+    - `epsilon`, `int`: exploration rate
+    - `gamma`, `int`: decay rate
+    - `terminal`, `bool`: terminal state, since the game terminates on its own when hp reaches 0, this bool is considered obsolete 
+    - `Q`, `empty`: IDK wt to do with Q values yet
+    *That said, at the time of writing I`m still figuring out all the RL stuff so these parameters are never found in actual execution of this version of code*
 
 #### Initial Values
     - hp = current player hp
@@ -74,14 +74,14 @@ and its variables can be called and updated with:
     - points = current player points
     - oldPoints = player points before update
     - position = Initial player position
-    - maxEnemies = number of enemies the 'agent' should consider
-    - maxBullets =  number of bullets the 'agent' should consider
+    - maxEnemies = number of enemies the `agent` should consider
+    - maxBullets =  number of bullets the `agent` should consider
     - proxyRange = determines bullet detection ring around player
-    - all the initialising values and values we keep track of*
+    - all the initialising values and values we keep track of
 
 ### rlAgent.py
 - Here is where all the functions and classes are stored for RL  
-- If you spot a redundant variable or defined variables that never appear in the script, you're probably right. IDK what i was doing most of the time and just added random stuff as I learn along.
+- If you spot a redundant variable or defined variables that never appear in the script, you`re probably right. IDK what i was doing most of the time and just added random stuff as I learn along.
 
 #### class agent
 
@@ -92,7 +92,7 @@ and its variables can be called and updated with:
 - the `action` variable is a 1x2 list, where `action[0]` is an integer value (0-8) indicating direction just like the car in the racetrack coursework.  `action[1]` is a boolean controlling whether the player should shoot.  There are basically no drawbacks in holding the shoot button so most of the time I just kept the thing as True.
 
 Note:
-- A `player` is the in game character that handles what happens in the environment, where as an `agent` is the AI with brains n stuff.  You would see something similar to `player.agent` in GameScene.py when I want to update the agent's states during gameplay, and `agent.player` in rlAgent.py because I just learnt the existence of classes in python and don't entirely understand how they work.
+- A `player` is the in game character that handles what happens in the environment, where as an `agent` is the AI with brains n stuff.  You would see something similar to `player.agent` in GameScene.py when I want to update the agent`s states during gameplay, and `agent.player` in rlAgent.py because I just learnt the existence of classes in python and don`t entirely understand how they work.
 
 - A `position` is a vector2 variable inside the class of player, while `coords` is a 1x2 numpy array storing the x and y coordinates within `position`, ie. `player.positon.coords`.
 
@@ -113,7 +113,7 @@ returns the reward by checking the following:
 - state of agent stores:  
  * coordinates of agent (numpyarr, [float x, float y]) *(not to be confused with position, which is a Vector2 datatype)*
  * coordinates of maximum enemies on map (numpyarr, [[float x, float y]]*maxEnemies) *(list size kept constant for easier NN input,empty slots are registerd as [-1,-1])*
- * coordinates of 50 nearest bullets in player proxy range (numpyarr, [[float x, float y]]*maxEnemies) *(It was originally planned to use proxy circle to reduce the number of bulletrs to be processed by the agent, it is then found out that NNs with constant input sizes seem easier to be implemented, but i can't be asked to remove the ring after all that work, so it stays)*
+ * coordinates of 50 nearest bullets in player proxy range (numpyarr, [[float x, float y]]*maxEnemies) *(It was originally planned to use proxy circle to reduce the number of bulletrs to be processed by the agent, it is then found out that NNs with constant input sizes seem easier to be implemented, but i can`t be asked to remove the ring after all that work, so it stays)*
 
 ##### def update[state]():
 - Updates the coordinate list based on info from GameScene.py  
