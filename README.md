@@ -7,7 +7,7 @@ Python 3.12, any version lower than that may cause errors (from personal experie
 
 ## Getting Started
 - Install the whole folder
-- Open the entire folder in VS Code (MAC users you`re on your own)
+- Open the entire folder in VS Code (MAC users you're on your own)
 - In the terminal input the command `pip install -r requirements.txt`
 - then also do `pip install -r pytorch` for neural network stuff.
 - If no errors were reported you should be good to go
@@ -81,18 +81,18 @@ and its variables can be called and updated with:
 
 ### rlAgent.py
 - Here is where all the functions and classes are stored for RL  
-- If you spot a redundant variable or defined variables that never appear in the script, you`re probably right. IDK what i was doing most of the time and just added random stuff as I learn along.
+- If you spot a redundant variable or defined variables that never appear in the script, you're probably right. IDK what i was doing most of the time and just added random stuff as I learn along.
 
 #### class agent
 
-##### __init__
+##### __init()__
 - stores all the stuff needed for the agent:
     variables: states, new states, position, actions, rewards
 
 - the `action` variable is a 1x2 list, where `action[0]` is an integer value (0-8) indicating direction just like the car in the racetrack coursework.  `action[1]` is a boolean controlling whether the player should shoot.  There are basically no drawbacks in holding the shoot button so most of the time I just kept the thing as True.
 
 Note:
-- A `player` is the in game character that handles what happens in the environment, where as an `agent` is the AI with brains n stuff.  You would see something similar to `player.agent` in GameScene.py when I want to update the agent`s states during gameplay, and `agent.player` in rlAgent.py because I just learnt the existence of classes in python and don`t entirely understand how they work.
+- A `player` is the in game character that handles what happens in the environment, where as an `agent` is the AI with brains n stuff.  You would see something similar to `player.agent` in GameScene.py when I want to update the agent's states during gameplay, and `agent.player` in rlAgent.py because I just learnt the existence of classes in python and don't entirely understand how they work.
 
 - A `position` is a vector2 variable inside the class of player, while `coords` is a 1x2 numpy array storing the x and y coordinates within `position`, ie. `player.positon.coords`.
 
