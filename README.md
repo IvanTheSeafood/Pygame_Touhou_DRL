@@ -1,6 +1,6 @@
 # Touhou Pygame AI
-* A project to train an AI to play a pygame version of the bullet hell shooter game: Touhou, with deep reinforcement learning
-* An individual project for fun turned into a school group project as the author`s teamates couldn`t figure out Pyboy but their RL project deadlines closing in
+* A project to train an AI play a pygame version of the bullet hell shooter game: Touhou, with deep reinforcement learning
+* An individual project for fun turned into a legit school group project as the author's teamates couldn't figure out Pyboy but their RL project deadlines closing in
 
 ## Requirements
 Python 3.12, any version lower than that may cause errors (from personal experience)  
