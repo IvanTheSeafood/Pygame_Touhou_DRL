@@ -21,7 +21,7 @@ Python 3.12, any version lower than that may cause errors (from personal experie
 - Player looses HP(max 4 per gameplay) and respawns at the bottom of the map if they get hit
 - Lose all HP and you get sent to the scoreboard
 - Player gets points if they shoot an enemy
-- Power is an accurate gameplay mechanic in the real deal but does aboslutely nothing in the pygame version other than extra points *(the blue and red stuff dropped by enemies)*
+- Power is an accurate gameplay mechanic to the real deal but does aboslutely nothing in the pygame version other than extra points *(the blue and red stuff dropped by enemies)*
 
 ## Code
 - The game is split into 50 million smaller scripts.  
@@ -57,27 +57,27 @@ and its variables can be called and updated with:
 `variable = mlData.[variable_name]` and `mlData.[variable_name]=value`
 
 #### Switches
-    * 'status', 'bool': True=enable RL, False=play regularly
-    * 'hitBoxStatus', 'bool': True=shows circle around player where the 50 closest bullets are accounted for
+    - 'status', 'bool': True=enable RL, False=play regularly
+    - 'hitBoxStatus', 'bool': True=shows circle around player where the 50 closest bullets are accounted for
 
 #### Average RL parameters
-    * 'alpha', 'int': learning rate
-    * 'epsilon', 'int': exploration rate
-    * 'gamma', 'int': decay rate
-    * 'terminal', 'bool': terminal state, since the game terminates on its own when hp reaches 0, this bool is considered obsolete 
-    * 'Q', 'empty': IDK wt to do with Q values yet
+    - 'alpha', 'int': learning rate
+    - 'epsilon', 'int': exploration rate
+    - 'gamma', 'int': decay rate
+    - 'terminal', 'bool': terminal state, since the game terminates on its own when hp reaches 0, this bool is considered obsolete 
+    - 'Q', 'empty': IDK wt to do with Q values yet
     *That said, at the time of writing I'm still figuring out all the RL stuff so these parameters are never found in actual execution of this version of code*
 
 #### Initial Values
-    * hp = current player hp
-    * oldHp = player hp before update
-    * points = current player points
-    * oldPoints = player points before update
-    * position = Initial player position
-    * maxEnemies = number of enemies the 'agent' should consider
-    * maxBullets =  number of bullets the 'agent' should consider
-    * proxyRange = determines bullet detection ring around player
-    * all the initialising values and values we keep track of*
+    - hp = current player hp
+    - oldHp = player hp before update
+    - points = current player points
+    - oldPoints = player points before update
+    - position = Initial player position
+    - maxEnemies = number of enemies the 'agent' should consider
+    - maxBullets =  number of bullets the 'agent' should consider
+    - proxyRange = determines bullet detection ring around player
+    - all the initialising values and values we keep track of*
 
 ### rlAgent.py
 - Here is where all the functions and classes are stored for RL  
