@@ -13,7 +13,7 @@ from assets.scripts.classes.hud_and_rendering.SpriteSheet import SpriteSheet
 from assets.scripts.math_and_data.Vector2 import Vector2
 from assets.scripts.classes.game_logic.AttackFunctions import AttackFunctions
 
-from assets.scripts.learning.qlAgent import agent, agentState
+from assets.scripts.learning.rlAgent import agent
 from assets.scripts.learning import mlData
 
 from assets.scripts.math_and_data.enviroment import *
@@ -86,7 +86,7 @@ class GameScene(Scene):
 
         else:
             if self.agent.terminal is False:
-                decision=self.agent.moveDirection([random.randint(0,8),random.choice([0,1])])
+                decision=self.agent.takeAction()
                 '''
                 TD method, not working
                 action = self.agent.chooseAction(self.agent.state)   #[random.randint(0,8),True]
@@ -205,16 +205,14 @@ class GameScene(Scene):
                 self.enemies.append(enemy)
                 self.enemy_count += 1
 
-        self.agent.state.enemyCoord=[mlData.emptyCoord]*mlData.maxEnemies
-        self.agent.newState.enemyCoord=[mlData.emptyCoord]*mlData.maxEnemies
-        ei=0
+        ei = 0    
+        self.agent.state.enemyCoord = [mlData.emptyCoord]*mlData.maxEnemies 
         for enemy in self.enemies:
-            self.agent.state.appendEnemy(enemy,ei)
             enemy.update()
             enemy.move()
-            self.agent.newState.appendEnemy(enemy,ei)
-            ei+=1
-
+            self.agent.state.updateEnemy(enemy,ei)
+            ei +=1
+            
         for bullet in self.player.bullets:
             on_screen = bullet.move(delta_time)
             if not on_screen:
@@ -238,25 +236,19 @@ class GameScene(Scene):
             if self.bullet_cleaner.kill:
                 del self.bullet_cleaner
                 self.bullet_cleaner = None
-        
-        self.agent.state.bulletCoord=[mlData.emptyCoord]*mlData.maxBullets
-        self.agent.newState.bulletCoord=[mlData.emptyCoord]*mlData.maxBullets
-        ebi = 0
+
+        ebi=0
+        self.agent.state.bulletCoord = [mlData.emptyCoord]*mlData.maxBullets
         for bullet in self.enemy_bullets:
             #print(bullet.position)
-            self.agent.state.appendBullet(self.agent, bullet, ebi)
-            '''
-            if self.agent.ring.check_collision(bulletCollider):
-                self.agent.state.bulletPos.append(bullet.position)
-            '''
+        
             on_screen = bullet.move(delta_time)
-            self.agent.newState.appendBullet(self.agent, bullet, ebi)
             if not on_screen:
                 self.enemy_bullets.remove(bullet)
-                del bullet
+            self.agent.newState.updateBullet(self.agent,bullet,ebi)
             ebi +=1
-
         self.player.update()
+        self.agent.newState.playerCoord= self.player.position.coords
 
     @render_fps
     def render(self, screen, clock):
@@ -281,6 +273,10 @@ class GameScene(Scene):
         '''
         for bulletCoord in self.agent.state.bulletCoord:
             pygame.draw.circle(screen, (0,255,0),bulletCoord,10)
+
+        for enemyCoord in self.agent.state.enemyCoord:
+            pygame.draw.circle(screen, (0,0,255),enemyCoord,20)
+
         for item in self.items:
             self.item_group.add(item.get_sprite())
 

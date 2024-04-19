@@ -22,10 +22,11 @@ class TitleScene(Scene):
         ).convert_alpha()
 
         self.font = pygame.font.Font(path_join("assets", "fonts", "DFPPOPCorn-W12.ttf"), 45)
-
+        
         self.matrix = [[["Start", self.switch_to_game]], [["Score", self.switch_to_scoreboard]], [["Quit", self.quit]]]
         self.ButtonMatrix = SelectButtonMatrix(Vector2(100, 100), self.matrix, self.font, (100, 100, 100), (255, 50, 40))
-
+        self.agent = None
+        
     @render_fps
     def render(self, screen, clock):
         background_group = pygame.sprite.RenderPlain()

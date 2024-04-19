@@ -13,7 +13,7 @@ class agent:
         self.switch = mlData.status
         self.player = player
 
-        self.state = agentState(player)#player pos,enemy pos, bullet pos, 
+        self.state = agentState(player) #player pos, enemy pos, bullet pos, 
         self.newState = agentState(player)
         self.action = [0, False] # 9 possible actions
         self.reward = 0
@@ -22,6 +22,10 @@ class agent:
         self.episode = mlData.episode
         self.q = mlData.Q
         self.ring = None
+    
+    def takeAction(self):
+        self.action = [np.random.randint(0,8),True]
+        return self.moveDirection(self.action)
     
     def moveDirection(self, action=[4, False]):
  
@@ -35,6 +39,14 @@ class agent:
             self.player.shoot()
             
         return finalMove[action[0]]
+    
+    def returnR(self,data=mlData):
+        self.reward = 0
+        if data.hp < data.oldHp:
+            data.oldHp = data.hp
+            self.reward -=10
+        self.reward += (data.points-data.oldPoints)/100 +1
+        return self.reward
 
 class agentState:
     def __init__(self, player):
@@ -47,7 +59,7 @@ class agentState:
         #self.bulletPos = []
         self.bulletCoord = [mlData.emptyCoord]*mlData.maxBullets
 
-    def appendBullet(self, agent, bullet, i):
+    def updateBullet(self, agent, bullet, i):
         hitbox= Collider(10,bullet.position)
         if agent.ring.check_collision(hitbox):
             if i<mlData.maxBullets:
@@ -63,7 +75,7 @@ class agentState:
                 if self.checkDistance(bullet.position.coords):
                     self.bulletCoord[cellPos] = bullet.position.coords
 
-    def appendEnemy(self, enemy, i):
+    def updateEnemy(self, enemy, i):
         if i < mlData.maxEnemies:
             self.enemyCoord[i] = enemy.position.coords
         else:
@@ -73,9 +85,37 @@ class agentState:
         b = self.playerCoord
         return math.sqrt((b[0]-a[0])**2+(b[1]-a[1])**2)
 
-class QNetwork(nn.Module):
+class RLProcess:
+    def __init__(self,scene,rlnn):
+        self.scene=scene
+        self.rlnn = rlnn
 
-    def __init__(self, hidden_size, state_size= mlData.maxBullets + mlData.maxEnemies + 1, action_size=9):
+    def checkScene(self):
+        if self.scene.agent is not None and mlData.status == True:
+            return True
+        else: 
+            return False
+            
+    def reviewAction(self, action = None):
+            
+        if self.checkScene() == True:
+            if action is None:
+                action = self.scene.agent.action[0]
+        
+            #self.scene.agent.r=self.scene.agent.returnR()
+            #predictQ = self.rlnn(self.scene.agent.state, action,self.scene.agent.newState, self.scene.agent.reward)
+            #targetQ = self.rlnn(self.scene.agent.state, action,self.scene.agent.newState, 5)
+            #loss = nn.MSELoss()(predictQ,targetQ)
+            #loss.backward()
+            
+    def updateState(self,scene):
+        if self.checkScene() == True:
+            self.scene.agent.state = self.scene.agent.newState
+        self.scene =scene
+
+class QNetwork(nn.Module):
+    #search softMax
+    def __init__(self, hidden_size, state_size= (mlData.maxBullets + mlData.maxEnemies + 1)*2, action_size=9):
         super(QNetwork, self).__init__()
         self.state_size = state_size
         self.action_size = action_size
@@ -85,10 +125,35 @@ class QNetwork(nn.Module):
         self.fc2 = nn.Linear(hidden_size, 1)
     
     def forward(self, state, action, new_state, reward):
+        state=self.fuseState(state)
+        new_state = self.fuseState(new_state)
+        state=torch.tensor(state)
+        action = torch.tensor([action])
+        new_state = torch.tensor(new_state)
+        reward = torch.tensor([reward])
+        print("Shape of state:", state.shape)
+        print("Shape of action:", action.shape)
+        print("Shape of new_state:", new_state.shape)
+        print("Shape of reward:", reward.shape)
+
+        #state=self.fuseState(stateArr)
+        #new_state = self.fuseState(new_stateArr)
         # Concatenate inputs
-        x = torch.cat((state, action, new_state, reward), dim=1)
+        x = torch.cat((state, action, new_state, reward), dim=0)
         
         # Forward pass through the network
         x = torch.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+    
+    def fuseState(self, state,data=mlData):
+        result = []
+        result.append(state.playerCoord[0])
+        result.append(state.playerCoord[1])
+        for i in range(data.maxEnemies):
+            result.append(state.enemyCoord[i][0])
+            result.append(state.enemyCoord[i][1])
+        for j in range(data.maxBullets):
+            result.append(state.bulletCoord[i][0])
+            result.append(state.bulletCoord[i][1])
+        return result

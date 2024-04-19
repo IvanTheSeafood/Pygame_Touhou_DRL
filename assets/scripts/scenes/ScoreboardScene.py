@@ -22,7 +22,7 @@ class ScoreboardScene(Scene):
 
         self.font = pygame.font.Font(path_join("assets", "fonts", "DFPPOPCorn-W12.ttf"), 24)
         self.player = player
-
+        self.agent = None
         self.leaderboard = list(map(lambda x: ScoreboardLine(*x), db_module.get_leaderboard()))
         self.leaderboard.sort(reverse=True)
 
