@@ -15,7 +15,7 @@ Python 3.12, any version lower than that may cause errors (from personal experie
 
 ## Gameplay
 - Player moves up, down, left, right with arrow keys
-- player shoots with `x` key
+- player shoots with `z` key
 - Player skips boring UI stuff with `ENTER` key
 - Enemy spawns in waves and shoots at player
 - Player looses HP(max 4 per gameplay) and respawns at the bottom of the map if they get hit
