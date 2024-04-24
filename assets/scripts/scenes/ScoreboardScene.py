@@ -28,10 +28,11 @@ class ScoreboardScene(Scene):
 
         if player is not None:
             if mlData.status ==True:
-                mlData.episode += 1
+                
                 mlData.hp = 4
                 mlData.oldHp = 4
-                print('regen', mlData.episode)
+                print('Episode:', mlData.episode, "Final Score:",self.player.points)
+                mlData.episode += 1
                 self.switch_to_game()
             else:
                 self.cursor = 0

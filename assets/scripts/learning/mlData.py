@@ -5,8 +5,10 @@ alpha = 0.2
 epsilon =0.01
 gamma = 0.9
 
-status = False
+status = True
 hitBoxStatus = False
+playSpeed = 100
+renderStatus =  False
 
 terminal = False
 episode = 0
