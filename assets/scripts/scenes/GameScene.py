@@ -83,7 +83,7 @@ class GameScene(Scene):
 
             if pygame.key.get_pressed()[pygame.K_z]:
                 self.player.shoot()
-
+            decision = move_direction  
         else:
             if self.agent.terminal is False:
                 decision=self.agent.takeAction()
@@ -103,7 +103,7 @@ class GameScene(Scene):
                 self.agent.state = self.agent.newState
                 '''
                 #print(len(self.agent.q))
-                
+           
         self.player.move(decision)
         
         if pygame.key.get_pressed()[pygame.K_LSHIFT]:
@@ -271,11 +271,13 @@ class GameScene(Scene):
             enemyCollider = Collider(10,enemyPos)
             enemyCollider.visualise(screen,(0,0,255))
         '''
-        for bulletCoord in self.agent.state.bulletCoord:
-            pygame.draw.circle(screen, (0,255,0),bulletCoord,10)
+        if mlData.hitBoxStatus== True:
+            for bulletCoord in self.agent.state.bulletCoord:
+                pygame.draw.circle(screen, (0,255,0),bulletCoord,10)
 
-        for enemyCoord in self.agent.state.enemyCoord:
-            pygame.draw.circle(screen, (0,0,255),enemyCoord,20)
+            for enemyCoord in self.agent.state.enemyCoord:
+
+                pygame.draw.circle(screen, (0,0,255),enemyCoord,20)
 
         for item in self.items:
             self.item_group.add(item.get_sprite())

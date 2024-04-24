@@ -5,8 +5,8 @@ alpha = 0.2
 epsilon =0.01
 gamma = 0.9
 
-status = True
-hitBoxStatus = True
+status = False
+hitBoxStatus = False
 
 terminal = False
 episode = 0
