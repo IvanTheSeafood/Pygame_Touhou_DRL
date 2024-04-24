@@ -9,13 +9,13 @@ Python 3.12, any version lower than that may cause errors (from personal experie
 - Install the whole folder
 - Open the entire folder in VS Code (MAC users you're on your own)
 - In the terminal input the command `pip install -r requirements.txt`
-- then also do `pip install -r pytorch` for neural network stuff.
+- then also do `pip install torch` for neural network stuff.
 - If no errors were reported you should be good to go
 - To run the game, simply run the `run.py` file in VS Code. *(Depending on the version errors might appear as the Author is still fucking around with the god damn neural network which keeps crashing)*
 
 ## Gameplay
 - Player moves up, down, left, right with arrow keys
-- player shoots with `x` key
+- player shoots with `z` key
 - Player skips boring UI stuff with `ENTER` key
 - Enemy spawns in waves and shoots at player
 - Player looses HP(max 4 per gameplay) and respawns at the bottom of the map if they get hit
