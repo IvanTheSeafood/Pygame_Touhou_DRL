@@ -83,33 +83,21 @@ class GameScene(Scene):
 
             if pygame.key.get_pressed()[pygame.K_z]:
                 self.player.shoot()
-            decision = move_direction  
+  
         else:
-            if self.agent.terminal is False:
-                decision=self.agent.takeAction()
-                '''
-                TD method, not working
-                action = self.agent.chooseAction(self.agent.state)   #[random.randint(0,8),True]
-                self.agent.takeAction(action)
-                move_direction =self.agent.moveDirection
-                if self.agent.shoot == True:
-                    self.player.shoot()
-                r = self.agent.reviewAction(self.player)
-                newAction = self.agent.chooseAction(self.agent.newState)
-                self.agent.state = tuple(self.agent.state)
-                self.agent.newState = tuple(self.agent.newState)
-                self.agent.q[self.agent.state][action[0]] += mlData.alpha*(r +mlData.gamma*max(self.agent.q[self.agent.newState])-self.agent.q[self.agent.state][action[0]])
-                self.agent.updateQ()
-                self.agent.state = self.agent.newState
-                '''
-                #print(len(self.agent.q))
+            #if self.agent.terminal is False:
+            move_direction=self.agent.selectAction()
            
-        self.player.move(decision)
-        
+        self.player.move(move_direction)
+
+        '''
+        #True gamers don't slow down
         if pygame.key.get_pressed()[pygame.K_LSHIFT]:
             self.player.slow = True
         else:
             self.player.slow = False
+        '''
+
 
     def update(self, delta_time):
         self.delta_time = delta_time
@@ -248,7 +236,19 @@ class GameScene(Scene):
             self.agent.newState.updateBullet(self.agent,bullet,ebi)
             ebi +=1
         self.player.update()
+        #1000 lins of code to update agent state above
+        #-------------------------------------------------------------------------------------------------
+        #RL continues here:
         self.agent.newState.playerCoord= self.player.position.coords
+        self.agent.returnR()
+        self.agent.reviewAction()
+        self.agent.state = self.agent.newState
+
+
+
+#---------------------------------------------------------------------------------------------------------
+
+
 
     @render_fps
     def render(self, screen, clock):
@@ -276,8 +276,9 @@ class GameScene(Scene):
                 pygame.draw.circle(screen, (0,255,0),bulletCoord,10)
 
             for enemyCoord in self.agent.state.enemyCoord:
-
                 pygame.draw.circle(screen, (0,0,255),enemyCoord,20)
+
+            #pygame.draw.circle(screen, (0,0,255),self.player.position.coords,mlData.proxyRange)
 
         for item in self.items:
             self.item_group.add(item.get_sprite())

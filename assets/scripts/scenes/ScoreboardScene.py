@@ -31,7 +31,7 @@ class ScoreboardScene(Scene):
                 
                 mlData.hp = 4
                 mlData.oldHp = 4
-                print('Episode:', mlData.episode, "Final Score:",self.player.points)
+                print('Episode:', mlData.episode, "Final Score:",self.player.points, "Final Reward:",mlData.rewardTotal)
                 mlData.episode += 1
                 self.switch_to_game()
             else:
@@ -130,6 +130,7 @@ class ScoreboardScene(Scene):
     def switch_to_game(self):
         from assets.scripts.scenes.GameScene import GameScene
         self.switch_to_scene(GameScene())
+        
     def save(self):
         self.statistics.name = self.name
         if self.statistics.name != "        ":

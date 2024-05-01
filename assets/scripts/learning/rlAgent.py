@@ -15,19 +15,33 @@ class agent:
 
         self.state = agentState(player) #player pos, enemy pos, bullet pos, 
         self.newState = agentState(player)
-        self.action = [0, False] # 9 possible actions
+        self.action = [0, False] # 9 possible actions, shoot or not
         self.reward = 0
+        mlData.rewardTotal = 0
         self.terminal = False
 
         self.episode = mlData.episode
-        self.q = mlData.Q
+        self.q = QNet
+        #self.targetQ = 0
+        self.predictQ = 0
         self.ring = None
     
-    def takeAction(self):
-        self.action = [np.random.randint(0,8),True]
+    def selectAction(self):                     #Select action based on NN
+        
+        self.qList = self.q(self.state).detach().numpy()    #Do NN
+
+        if np.random.rand(0,1)>mlData.epsilon:                   #Explore vs Exploit (or something)
+            self.action[0]=np.argmax(self.qList)
+        else:
+            self.action[0]=np.random.randint(0,8)
+
+        self.action[1]=True
+
+        self.pedictQ = self.qList[self.action[0]]
+
         return self.moveDirection(self.action)
     
-    def moveDirection(self, action=[4, False]):
+    def moveDirection(self, action=[4, False]): #Translate action integers into pygame language of vectors
  
         #Moving
         finalMove =[Vector2.up() + Vector2.left(),   Vector2.up(),   Vector2.up() + Vector2.right(),
@@ -44,10 +58,30 @@ class agent:
         self.reward = 0
         if data.hp < data.oldHp:
             data.oldHp = data.hp
-            self.reward -=10
-        self.reward += (data.points-data.oldPoints)/100 +1
+            self.reward -=10000
+        self.reward += (data.points-data.oldPoints)/100 + 0.1
+        mlData.rewardTotal += self.reward
         return self.reward
+    
+    def reviewAction(self):
+        data = mlData
+        targetQ = self.predictQ + data.alpha * (self.reward + data.gamma*np.max(self.q(self.newState).detach().numpy())-self.predictQ)
 
+        targetQTensor=self.qList
+        targetQTensor[self.action[0]]=targetQ
+        targetQTensor=torch.tensor(targetQTensor, dtype=torch.float32)  #keep the outputshapes intact
+        #predictQTensor=torch.tensor(self.qList, dtype=torch.float32)    #not to be mixed with self.predictQ
+
+        #print(type(targetQTensor),targetQTensor)
+        #print(type(predictQTensor),predictQTensor)
+
+        #targetQTensor.requires_grad_(True)
+        #predictQTensor.requires_grad_(True)
+
+        loss = nn.MSELoss()(self.q(self.state), targetQTensor)
+        loss.backward()
+
+    
 class agentState:
     def __init__(self, player):
         #self.playerPos=player.position
@@ -85,67 +119,33 @@ class agentState:
         b = self.playerCoord
         return math.sqrt((b[0]-a[0])**2+(b[1]-a[1])**2)
 
-class RLProcess:
-    def __init__(self,scene,rlnn):
-        self.scene=scene
-        self.rlnn = rlnn
-
-    def checkScene(self):
-        if self.scene.agent is not None and mlData.status == True:
-            return True
-        else: 
-            return False
-            
-    def reviewAction(self, action = None):
-            
-        if self.checkScene() == True:
-            if action is None:
-                action = self.scene.agent.action[0]
-        
-            #self.scene.agent.r=self.scene.agent.returnR()
-            #predictQ = self.rlnn(self.scene.agent.state, action,self.scene.agent.newState, self.scene.agent.reward)
-            #targetQ = self.rlnn(self.scene.agent.state, action,self.scene.agent.newState, 5)
-            #loss = nn.MSELoss()(predictQ,targetQ)
-            #loss.backward()
-            
-    def updateState(self,scene):
-        if self.checkScene() == True:
-            self.scene.agent.state = self.scene.agent.newState
-        self.scene =scene
-
 class QNetwork(nn.Module):
     #search softMax
-    def __init__(self, hidden_size, state_size= (mlData.maxBullets + mlData.maxEnemies + 1)*2, action_size=9):
+    def __init__(self, hidden_size, state_size= (mlData.maxBullets + mlData.maxEnemies + 1)*2, maxAction = 9):
         super(QNetwork, self).__init__()
-        self.state_size = state_size
-        self.action_size = action_size
+        self.inputSize = state_size
+        self.outputSize = maxAction
         
         # Define layers
-        self.fc1 = nn.Linear(state_size + action_size + state_size + 1, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, 1)
+        self.fc1 = nn.Linear(state_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size-1)
+        self.fc3 = nn.Linear(hidden_size-1, hidden_size-3)
+        self.fc4 = nn.Linear(hidden_size-3, hidden_size-5)
+        self.fc5 = nn.Linear(hidden_size-5, self.outputSize)
     
-    def forward(self, state, action, new_state, reward):
+    def forward(self, state):
         state=self.fuseState(state)
-        new_state = self.fuseState(new_state)
-        state=torch.tensor(state)
-        action = torch.tensor([action])
-        new_state = torch.tensor(new_state)
-        reward = torch.tensor([reward])
-        print("Shape of state:", state.shape)
-        print("Shape of action:", action.shape)
-        print("Shape of new_state:", new_state.shape)
-        print("Shape of reward:", reward.shape)
-
-        #state=self.fuseState(stateArr)
-        #new_state = self.fuseState(new_stateArr)
-        # Concatenate inputs
-        x = torch.cat((state, action, new_state, reward), dim=0)
-        
-        # Forward pass through the network
-        x = torch.relu(self.fc1(x))
+        state=torch.tensor(state, dtype=torch.float32)
+  
+        x = torch.relu(self.fc1(state))
         x = self.fc2(x)
+        x = self.fc3(x)
+        x = self.fc4(x)
+        x = self.fc5(x)
+
+        #print(type(x),x)
         return x
-    
+     
     def fuseState(self, state,data=mlData):
         result = []
         result.append(state.playerCoord[0])
@@ -157,3 +157,6 @@ class QNetwork(nn.Module):
             result.append(state.bulletCoord[i][0])
             result.append(state.bulletCoord[i][1])
         return result
+
+QNet = QNetwork(11)
+print('nn start')

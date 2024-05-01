@@ -6,21 +6,22 @@ epsilon =0.01
 gamma = 0.9
 
 status = True
-hitBoxStatus = False
-playSpeed = 100
-renderStatus =  False
+hitBoxStatus = True
+playSpeed = 1
+renderStatus =  True            #I think this variable is useless atm
 
 terminal = False
 episode = 0
+rewardTotal = 0
 
 position : Vector2 = Vector2(0,0)
 emptyCoord = np.array([-1,-1])
-maxBullets = 50
+maxBullets = 100
 maxEnemies = 10
 oldPoints = 0
 points = 0
 oldHp = 4
 hp = 4
-proxyRange = 100
+proxyRange = 200
 
-Q={}
+
