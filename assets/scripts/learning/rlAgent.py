@@ -20,6 +20,9 @@ class agent:
         self.action = [0, False] # 9 possible actions, shoot or not
         self.reward = 0
         mlData.rewardTotal = 0
+        mlData.oldHp = 4
+        mlData.oldPoints = 0
+        #print(mlData.rewardTotal)
         self.terminal = False
 
         self.episode = mlData.episode
@@ -41,7 +44,10 @@ class agent:
     
         self.action[1]=True
         self.pedictQ = self.qList[self.action[0]]
-        print('episode: {}, position: [{}, {}], action: {}, reward: {}'.format(mlData.episode,int(self.player.position.coords[0]),int(self.player.position.coords[1]),self.action[0],int(mlData.rewardTotal)), end ='\r')
+        print('episode: {}, position: [{}, {}], action: {}, reward: {}'.format(
+            mlData.episode,int(self.player.position.coords[0]),
+            int(self.player.position.coords[1]),self.action[0],
+            round(mlData.rewardTotal,2)), end ='\r')
 
         return self.moveDirection(self.action)
     
@@ -58,13 +64,23 @@ class agent:
             
         return finalMove[action[0]]
     
-    def returnR(self,data=mlData):
+    def returnR(self,data=mlData):  #not working: dead and score counter
         self.reward = 0
-        if data.hp < data.oldHp:
-            data.oldHp = data.hp
-            self.reward -=10000
-        self.reward += (data.points-data.oldPoints)/100 + 0.1
-        mlData.rewardTotal += self.reward
+        #print(self.player.hp)
+        if self.player.hp ==4:
+            data.oldHp = 4
+            if data.rewardTotal <0:
+                data.rewardTotal = 0
+
+        if self.player.hp < data.oldHp:
+            data.oldHp = self.player.hp
+            self.reward -=1000
+     
+        #print(self.player.points,'-',data.oldPoints,')/100 * ',(self.player.power-1.4),' + 0.01 =',end='')
+        self.reward += (self.player.points-data.oldPoints)/1000*(self.player.power - 1.4) + 0.01
+        #print( self.reward, '(',self.player.hp,',', data.oldHp,')total = ',data.rewardTotal,'                                           ',end='\r')
+        data.oldPoints = self.player.points
+        data.rewardTotal += self.reward
         return self.reward
     
     def reviewAction(self):

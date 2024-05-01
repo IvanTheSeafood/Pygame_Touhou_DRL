@@ -60,6 +60,7 @@ class GameScene(Scene):
 
         self.agent = agent(self.player)
         self.agent.terminal = False
+        print(mlData.rewardTotal)
         #self.agent.state = tuple(self.player.position.coords)
         self.agent.ring = Collider(mlData.proxyRange, self.player.position)
 

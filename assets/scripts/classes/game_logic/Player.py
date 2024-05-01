@@ -8,6 +8,7 @@ from assets.scripts.math_and_data.Vector2 import Vector2
 from assets.scripts.math_and_data.functions import *
 from assets.scripts.math_and_data.enviroment import *
 
+from assets.scripts.learning import mlData
 class Player(Entity):
     def __init__(self, id: int, scene, hp: int):
         super().__init__()

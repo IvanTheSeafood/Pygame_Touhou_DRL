@@ -17,7 +17,6 @@ from assets.scripts.scenes.GameScene import GameScene
 if not mlData.status:
     active_scene = TitleScene()
 else:
-    from assets.scripts.learning.rlAgent import QNetwork
     active_scene = GameScene()
 
 ticksLastFrame = pygame.time.get_ticks()
