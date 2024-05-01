@@ -47,7 +47,7 @@ class agent:
         print('episode: {}, position: [{}, {}], action: {}, reward: {}'.format(
             mlData.episode,int(self.player.position.coords[0]),
             int(self.player.position.coords[1]),self.action[0],
-            round(mlData.rewardTotal,2)), end ='\r')
+            round(mlData.rewardTotal,2), '                    '), end ='\r')
 
         return self.moveDirection(self.action)
     
