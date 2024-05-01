@@ -30,9 +30,11 @@ class agent:
         
         self.qList = self.q(self.state).detach().numpy()    #Do NN
 
-        if np.random.rand(0,1)>mlData.epsilon:                   #Explore vs Exploit (or something)
+        if np.random.rand()>mlData.epsilon:                   #Explore vs Exploit (or something)
+            print('learn')
             self.action[0]=np.argmax(self.qList)
         else:
+            print('.')
             self.action[0]=np.random.randint(0,8)
 
         self.action[1]=True
