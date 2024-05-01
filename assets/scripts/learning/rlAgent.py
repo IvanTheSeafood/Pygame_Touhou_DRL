@@ -22,6 +22,7 @@ class agent:
         mlData.rewardTotal = 0
         mlData.oldHp = 4
         mlData.oldPoints = 0
+        mlData.killTotal = 0
         #print(mlData.rewardTotal)
         self.terminal = False
 
@@ -44,10 +45,7 @@ class agent:
     
         self.action[1]=True
         self.pedictQ = self.qList[self.action[0]]
-        print('episode: {}, position: [{}, {}], action: {}, reward: {}'.format(
-            mlData.episode,int(self.player.position.coords[0]),
-            int(self.player.position.coords[1]),self.action[0],
-            round(mlData.rewardTotal,2), '                    '), end ='\r')
+        print('episode: {}, position: [{}, {}], action: {}, kill count: {}, reward: {}'.format(mlData.episode,int(self.player.position.coords[0]),int(self.player.position.coords[1]),self.action[0],mlData.killTotal,round(mlData.rewardTotal,2), '                    '), end ='\r')
 
         return self.moveDirection(self.action)
     
@@ -67,17 +65,25 @@ class agent:
     def returnR(self,data=mlData):  #not working: dead and score counter
         self.reward = 0
         #print(self.player.hp)
-        if self.player.hp ==4:
+        if self.player.hp ==4:  #init
             data.oldHp = 4
             if data.rewardTotal <0:
                 data.rewardTotal = 0
 
-        if self.player.hp < data.oldHp:
+        if self.player.hp < data.oldHp: #damaged
             data.oldHp = self.player.hp
             self.reward -=1000
-     
+        elif self.player.hp > data.oldHp:   #healitem
+            data.oldHp = self.player.hp
+        if data.kill > 2:   #Balance out enemies that die of heart attack
+            data.kill = 0
+        data.killTotal += data.kill
+
         #print(self.player.points,'-',data.oldPoints,')/100 * ',(self.player.power-1.4),' + 0.01 =',end='')
-        self.reward += (self.player.points-data.oldPoints)/1000*(self.player.power - 1.4) + 0.01
+        self.reward += data.kill*(1+(self.player.power - 2.4)*1)*100 + 0.01
+        #if data.kill > 0:
+            #print(data.killTotal, end = '\r')
+        data.kill = 0
         #print( self.reward, '(',self.player.hp,',', data.oldHp,')total = ',data.rewardTotal,'                                           ',end='\r')
         data.oldPoints = self.player.points
         data.rewardTotal += self.reward
@@ -90,13 +96,6 @@ class agent:
         targetQTensor=self.qList
         targetQTensor[self.action[0]]=targetQ
         targetQTensor=torch.tensor(targetQTensor, dtype=torch.float32)  #keep the outputshapes intact
-        #predictQTensor=torch.tensor(self.qList, dtype=torch.float32)    #not to be mixed with self.predictQ
-
-        #print(type(targetQTensor),targetQTensor)
-        #print(type(predictQTensor),predictQTensor)
-
-        #targetQTensor.requires_grad_(True)
-        #predictQTensor.requires_grad_(True)
 
         loss = nn.MSELoss()(self.q(self.state), targetQTensor)
         loss.backward()
@@ -133,7 +132,7 @@ class agentState:
         if i < mlData.maxEnemies:
             self.enemyCoord[i] = enemy.position.coords
         else:
-            print("max enemies on scree RN =", i)
+            pass
 
     def checkDistance(self, a):
         b = self.playerCoord

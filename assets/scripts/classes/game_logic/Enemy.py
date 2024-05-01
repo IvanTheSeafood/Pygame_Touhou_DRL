@@ -11,6 +11,8 @@ from assets.scripts.math_and_data.enviroment import music_module
 from assets.scripts.math_and_data.functions import scale_sprite, set_alpha_sprite
 from assets.scripts.math_and_data.Splines import BasisSpline
 
+from assets.scripts.learning import mlData
+
 BSpline = BasisSpline()
 
 
@@ -122,7 +124,7 @@ class Enemy(Entity):
                 sprite_sheet=[set_alpha_sprite(scale_sprite(self.death_effect_sprite, 1 + n / 2), 255 - n * 51).image for n in range(5)],
                 delay=4
             ))
-
+            mlData.kill +=1
             self.target.points += 10000
             drops = np.random.choice(self.drop[0], np.random.randint(1, 4), self.drop[1])
             drop_item = None
