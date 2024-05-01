@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+
+
 class agent:
     def __init__(self,player):
         self.switch = mlData.status
@@ -25,7 +27,7 @@ class agent:
         #self.targetQ = 0
         self.predictQ = 0
         self.ring = None
-    
+
     def selectAction(self):                     #Select action based on NN
         
         self.qList = self.q(self.state).detach().numpy()    #Do NN
@@ -36,10 +38,10 @@ class agent:
             self.action[0]=np.random.choice(bestActions)
         else:
             self.action[0]=np.random.randint(0,8)
-
+    
         self.action[1]=True
-        print('position: {}, action: {}'.format(self.player.position.coords,self.action[0]))
         self.pedictQ = self.qList[self.action[0]]
+        print('episode: {}, position: [{}, {}], action: {}, reward: {}'.format(mlData.episode,int(self.player.position.coords[0]),int(self.player.position.coords[1]),self.action[0],int(mlData.rewardTotal)), end ='\r')
 
         return self.moveDirection(self.action)
     

@@ -2,7 +2,7 @@ from assets.scripts.math_and_data.Vector2 import Vector2
 import numpy as np
 
 alpha = 0.2
-epsilon =0.01
+epsilon =0.1
 gamma = 0.9
 
 status = True

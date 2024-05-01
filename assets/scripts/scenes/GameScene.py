@@ -2,7 +2,6 @@ import numpy as np
 import pygame
 from pygame.locals import *
 import json
-import random
 
 from assets.scripts.classes.game_logic.BulletData import BulletData
 from assets.scripts.classes.game_logic.Enemy import Enemy
