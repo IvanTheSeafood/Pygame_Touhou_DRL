@@ -31,14 +31,14 @@ class agent:
         self.qList = self.q(self.state).detach().numpy()    #Do NN
 
         if np.random.rand()>mlData.epsilon:                   #Explore vs Exploit (or something)
-            print('learn')
             self.action[0]=np.argmax(self.qList)
+            bestActions =[i for i, j in enumerate(self.qList) if j ==max(self.qList)]   #OG tiebreaker
+            self.action[0]=np.random.choice(bestActions)
         else:
-            print('.')
             self.action[0]=np.random.randint(0,8)
 
         self.action[1]=True
-
+        print('position: {}, action: {}'.format(self.player.position.coords,self.action[0]))
         self.pedictQ = self.qList[self.action[0]]
 
         return self.moveDirection(self.action)

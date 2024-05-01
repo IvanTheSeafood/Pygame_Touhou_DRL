@@ -22,6 +22,6 @@ oldPoints = 0
 points = 0
 oldHp = 4
 hp = 4
-proxyRange = 200
+proxyRange = 500
 
 
