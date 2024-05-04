@@ -60,6 +60,7 @@ class GameScene(Scene):
 
         self.agent = agent(self.player)
         self.agent.terminal = False
+        self.agent.time = self.time
         #self.agent.state = tuple(self.player.position.coords)
         self.agent.ring = Collider(mlData.proxyRange, self.player.position)
 
@@ -85,6 +86,12 @@ class GameScene(Scene):
   
         else:
             #if self.agent.terminal is False:
+            #state = newState
+            if  self.agent.initBool:
+                self.agent.initBool = False
+            else:
+                self.agent.state=mlData.replay[-1][1]
+                
             move_direction=self.agent.selectAction()
            
         self.player.move(move_direction)
@@ -101,7 +108,7 @@ class GameScene(Scene):
     def update(self, delta_time):
         self.delta_time = delta_time
         self.time += delta_time
-
+        self.agent.time = self.time
         self.agent.ring.update_position(self.player.position)
 
         if self.time >= self.level["length"]:
@@ -227,21 +234,28 @@ class GameScene(Scene):
         ebi=0
         self.agent.state.bulletCoord = [mlData.emptyCoord]*mlData.maxBullets
         for bullet in self.enemy_bullets:
-            #print(bullet.position)
         
             on_screen = bullet.move(delta_time)
             if not on_screen:
                 self.enemy_bullets.remove(bullet)
             self.agent.newState.updateBullet(self.agent,bullet,ebi)
             ebi +=1
+            
+        self.agent.state.updateTime(self.time)
         self.player.update()
         #1000 lins of code to update agent state above
         #-------------------------------------------------------------------------------------------------
         #RL continues here:
         self.agent.newState.playerCoord= self.player.position.coords
         self.agent.returnR()
+
+        self.agent.addReplay()
+        
+
         self.agent.reviewAction()
-        self.agent.state = self.agent.newState
+        
+        self.agent.expReplay()
+        #self.agent.state = self.agent.newState
 
 
 
@@ -272,7 +286,7 @@ class GameScene(Scene):
         '''
         if mlData.hitBoxStatus== True:
             for bulletCoord in self.agent.state.bulletCoord:
-                pygame.draw.circle(screen, (0,255,0),bulletCoord,10)
+                pygame.draw.circle(screen, (0,255,0),(bulletCoord[0],bulletCoord[1]),10)
 
             for enemyCoord in self.agent.state.enemyCoord:
                 pygame.draw.circle(screen, (0,0,255),enemyCoord,20)

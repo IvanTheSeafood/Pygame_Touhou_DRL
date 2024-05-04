@@ -74,6 +74,7 @@ class Enemy(Entity):
         self.position = Vector2(coords=BSpline.curve(self.trajectory, self.t)) + Vector2(GAME_ZONE[0], GAME_ZONE[1])
         self.t += self.speed * delta_time
         if self.t > len(self.trajectory) - 1:
+            mlData.survive +=1
             self.death()
 
     def update(self) -> None:

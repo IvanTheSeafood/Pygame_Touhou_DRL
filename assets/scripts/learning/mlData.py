@@ -15,6 +15,7 @@ episode = 0
 rewardTotal = 0
 
 position : Vector2 = Vector2(0,0)
+emptyVector = np.array([-1,-1,0])
 emptyCoord = np.array([-1,-1])
 maxBullets = 100
 maxEnemies = 11
@@ -24,11 +25,23 @@ oldHp = 4
 hp = 4
 proxyRange = 500
 kill = 0
+survive = 0
 killTotal = 0
+waveTime = 7
+time = 0
+
+replayMax = 10000
+replay = []
+batchTotal = 100
+batch = []
 
 '''
 - game doesnt count kills during invincibility it seems, though its fair
 Scores:
 kill = 10 000
-point item = 30 000 + some number that i cant be asked to understand, see item.pyy
+point item = 30 000 + some number that i cant be asked to understand, see item.py
+
+wave 1: 07
+wave 2: 17
+wave 3: 25
 '''

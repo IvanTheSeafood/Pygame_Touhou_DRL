@@ -31,7 +31,7 @@ class ScoreboardScene(Scene):
                 
                 mlData.hp = 4
                 mlData.oldHp = 4
-                print('Episode:', mlData.episode, "Final Score:",self.player.points,"Final Kill Count:",mlData.killTotal, "Final Reward:",mlData.rewardTotal)
+                print('Episode:', mlData.episode, "Survival Time:",mlData.time,"Final Score:",self.player.points,"Final Kill Count:",mlData.killTotal, "Final Reward:",round(mlData.rewardTotal,2),'                      ')
                 mlData.episode += 1
                 self.switch_to_game()
             else:

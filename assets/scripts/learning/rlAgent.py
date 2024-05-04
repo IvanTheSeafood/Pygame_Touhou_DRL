@@ -3,11 +3,12 @@ from assets.scripts.math_and_data.Vector2 import Vector2
 from assets.scripts.learning import mlData
 #from assets.scripts.classes.game_logic.Player import Player
 import numpy as np
+import random
 import math
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
+import torch.nn.functional as nnFunc
 
 
 class agent:
@@ -15,27 +16,32 @@ class agent:
         self.switch = mlData.status
         self.player = player
 
+        self.initBool = True
         self.state = agentState(player) #player pos, enemy pos, bullet pos, 
         self.newState = agentState(player)
         self.action = [0, False] # 9 possible actions, shoot or not
         self.reward = 0
+        self.terminal = False
+
         mlData.rewardTotal = 0
         mlData.oldHp = 4
         mlData.oldPoints = 0
         mlData.killTotal = 0
-        #print(mlData.rewardTotal)
-        self.terminal = False
-
+        mlData.survive = 0
         self.episode = mlData.episode
+
+        self.time = 0
+        self.deathTime = -5
+        
         self.q = QNet
-        #self.targetQ = 0
-        self.predictQ = 0
+ 
         self.ring = None
 
     def selectAction(self):                     #Select action based on NN
         
+        #explore n greedy
+        '''
         self.qList = self.q(self.state).detach().numpy()    #Do NN
-
         if np.random.rand()>mlData.epsilon:                   #Explore vs Exploit (or something)
             self.action[0]=np.argmax(self.qList)
             bestActions =[i for i, j in enumerate(self.qList) if j ==max(self.qList)]   #OG tiebreaker
@@ -45,7 +51,13 @@ class agent:
     
         self.action[1]=True
         self.pedictQ = self.qList[self.action[0]]
-        print('episode: {}, position: [{}, {}], action: {}, kill count: {}, reward: {}'.format(mlData.episode,int(self.player.position.coords[0]),int(self.player.position.coords[1]),self.action[0],mlData.killTotal,round(mlData.rewardTotal,2), '                    '), end ='\r')
+        '''
+        #Softmax
+        actionProb = nnFunc.softmax(self.q(self.state))
+        self.action[0]=torch.multinomial(actionProb, num_samples=1).item()
+        self.action[1]=True
+
+        print('Episode: {}, Time:{}, Position: [{}, {}], Action: {}, Kill Count: {}, Reward: {}'.format(mlData.episode, round(self.time,2), int(self.player.position.coords[0]), int(self.player.position.coords[1]), self.action[0], mlData.killTotal, round(mlData.rewardTotal,2), '                    '), end ='\r')
 
         return self.moveDirection(self.action)
     
@@ -69,18 +81,25 @@ class agent:
             data.oldHp = 4
             if data.rewardTotal <0:
                 data.rewardTotal = 0
+        elif self.player.hp <0:
+            self.terminal = True
 
         if self.player.hp < data.oldHp: #damaged
             data.oldHp = self.player.hp
             self.reward -=1000
+            self.deathTime = self.time
         elif self.player.hp > data.oldHp:   #healitem
             data.oldHp = self.player.hp
+
         if data.kill > 2:   #Balance out enemies that die of heart attack
             data.kill = 0
         data.killTotal += data.kill
 
-        #print(self.player.points,'-',data.oldPoints,')/100 * ',(self.player.power-1.4),' + 0.01 =',end='')
-        self.reward += data.kill*(1+(self.player.power - 2.4)*1)*100 + 0.01
+        survivalBonus = self.time-self.deathTime -5
+        if survivalBonus<0:
+            survivalBonus = 0
+
+        self.reward += data.kill*(1+(self.player.power - 2.4)*1)*100 + 0.02*survivalBonus
         #if data.kill > 0:
             #print(data.killTotal, end = '\r')
         data.kill = 0
@@ -89,21 +108,51 @@ class agent:
         data.rewardTotal += self.reward
         return self.reward
     
+    def addReplay(self):
+
+        mlData.replay.append((self.state,self.newState,self.action,self.reward,self.terminal))  #Store exp into replay
+        if len(mlData.replay)>mlData.replayMax:     #If too long, delete oldest replay
+            mlData.replay.pop(0)
+        
+        if len(mlData.replay)>=mlData.batchTotal:
+                mlData.batch = random.sample(mlData.replay, mlData.batchTotal)
+
     def reviewAction(self):
         data = mlData
-        targetQ = self.predictQ + data.alpha * (self.reward + data.gamma*np.max(self.q(self.newState).detach().numpy())-self.predictQ)
+        targetQTensor=self.q(self.state).detach().numpy()
+        predictQ=targetQTensor[self.action[0]]
 
-        targetQTensor=self.qList
+        targetQ = predictQ + data.alpha * (self.reward + data.gamma*np.max(self.q(self.newState).detach().numpy())-predictQ)
+
+        
         targetQTensor[self.action[0]]=targetQ
         targetQTensor=torch.tensor(targetQTensor, dtype=torch.float32)  #keep the outputshapes intact
 
         loss = nn.MSELoss()(self.q(self.state), targetQTensor)
         loss.backward()
 
-    
+    def expReplay(self):
+        for experience in mlData.batch:
+                
+            expState, expNewState, expAction, expR, expTerminal = experience
+            expArray = self.q(expState).detach().numpy()
+            expNewArray = self.q(expNewState).detach().numpy()
+
+            if not expTerminal:
+                target = expR +  mlData.gamma * np.max(expNewArray)
+            else:
+                target = expR
+            expArray[expAction[0]] +=  mlData.alpha * (target - expArray[expAction[0]])
+
+            targetQTensor=torch.tensor(expArray, dtype=torch.float32)
+
+            loss = nn.MSELoss()(self.q(expState), targetQTensor)
+            loss.backward()
+            
 class agentState:
     def __init__(self, player):
         #self.playerPos=player.position
+        self.time = 0
         self.playerCoord = player.position.coords
 
         #self.enemyPos = []
@@ -112,11 +161,18 @@ class agentState:
         #self.bulletPos = []
         self.bulletCoord = [mlData.emptyCoord]*mlData.maxBullets
 
+        self.bulletAngle = [0]*mlData.maxBullets
+
+    def updateTime(self,time):
+        mlData.time = time
+        self.time = time
+
     def updateBullet(self, agent, bullet, i):
         hitbox= Collider(10,bullet.position)
         if agent.ring.check_collision(hitbox):
             if i<mlData.maxBullets:
                 self.bulletCoord[i]= bullet.position.coords
+                self.bulletAngle[i]= bullet.angle
             else:
                 cellMax = 0
                 cellPos = 50
@@ -127,6 +183,7 @@ class agentState:
                         cellPos = j
                 if self.checkDistance(bullet.position.coords):
                     self.bulletCoord[cellPos] = bullet.position.coords
+                    self.bulletAngle[cellPos] = bullet.angle
 
     def updateEnemy(self, enemy, i):
         if i < mlData.maxEnemies:
@@ -140,17 +197,17 @@ class agentState:
 
 class QNetwork(nn.Module):
     #search softMax
-    def __init__(self, hidden_size, state_size= (mlData.maxBullets + mlData.maxEnemies + 1)*2, maxAction = 9):
+    def __init__(self, hidden_size, state_size= (mlData.maxBullets)*3 + (mlData.maxEnemies + 1)*2, maxAction = 9):
         super(QNetwork, self).__init__()
-        self.inputSize = state_size
+        self.inputSize = state_size+1
         self.outputSize = maxAction
         
         # Define layers
-        self.fc1 = nn.Linear(state_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, hidden_size-1)
-        self.fc3 = nn.Linear(hidden_size-1, hidden_size-3)
-        self.fc4 = nn.Linear(hidden_size-3, hidden_size-5)
-        self.fc5 = nn.Linear(hidden_size-5, self.outputSize)
+        self.fc1 = nn.Linear(state_size+1, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size-10)
+        self.fc3 = nn.Linear(hidden_size-10, int(hidden_size/2))
+        self.fc4 = nn.Linear(int(hidden_size/2), int(hidden_size/4))
+        self.fc5 = nn.Linear(int(hidden_size/4), self.outputSize)
     
     def forward(self, state):
         state=self.fuseState(state)
@@ -167,15 +224,18 @@ class QNetwork(nn.Module):
      
     def fuseState(self, state,data=mlData):
         result = []
+        result.append(state.time)
         result.append(state.playerCoord[0])
         result.append(state.playerCoord[1])
         for i in range(data.maxEnemies):
             result.append(state.enemyCoord[i][0])
             result.append(state.enemyCoord[i][1])
         for j in range(data.maxBullets):
-            result.append(state.bulletCoord[i][0])
-            result.append(state.bulletCoord[i][1])
+            result.append(state.bulletCoord[j][0])
+            result.append(state.bulletCoord[j][1])
+            result.append(state.bulletAngle[j])
+
         return result
 
-QNet = QNetwork(11)
+QNet = QNetwork(50)
 print('nn start')
