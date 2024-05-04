@@ -30,9 +30,9 @@ killTotal = 0
 waveTime = 7
 time = 0
 
-replayMax = 1000
+replayMax = 10000
 replay = []
-batchTotal = 100
+batchTotal = 30
 batch = []
 
 '''
