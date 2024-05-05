@@ -69,30 +69,12 @@ class GameScene(Scene):
             if evt.type == QUIT:
                 pygame.quit()
 
-        move_direction = Vector2.zero()
-        if self.agent.switch == False:
-            
-            if pygame.key.get_pressed()[pygame.K_UP]:
-                move_direction += Vector2.up()
-            if pygame.key.get_pressed()[pygame.K_DOWN]:
-                move_direction += Vector2.down()
-            if pygame.key.get_pressed()[pygame.K_LEFT]:
-                move_direction += Vector2.left()
-            if pygame.key.get_pressed()[pygame.K_RIGHT]:
-                move_direction += Vector2.right()
-
-            if pygame.key.get_pressed()[pygame.K_z]:
-                self.player.shoot()
-  
+        if  self.agent.initBool:
+            self.agent.initBool = False
         else:
-            #if self.agent.terminal is False:
-            #state = newState
-            if  self.agent.initBool:
-                self.agent.initBool = False
-            else:
-                self.agent.state=mlData.replay[-1][1]
-                
-            move_direction=self.agent.selectAction()
+            self.agent.state=mlData.replay[-1][1]
+
+        move_direction=self.agent.selectAction()
            
         self.player.move(move_direction)
 
@@ -201,6 +183,7 @@ class GameScene(Scene):
 
         ei = 0    
         self.agent.state.enemyCoord = [mlData.emptyCoord]*mlData.maxEnemies 
+        mlData.enemyLine = -1
         for enemy in self.enemies:
             enemy.update()
             enemy.move()
@@ -251,6 +234,8 @@ class GameScene(Scene):
 
         self.agent.addReplay()
         
+        if self.agent.time - self.agent.timeUpdate >= 3:
+            self.agent.updateQtarget()
 
         self.agent.reviewAction()
         
@@ -267,7 +252,7 @@ class GameScene(Scene):
     def render(self, screen, clock):
         screen.fill((0, 0, 0), rect=GAME_ZONE)
 
-        self.agent.ring.visualise(screen,(255,0,0))
+        self.agent.ring.visualise(screen,(100,0,0))
         #
 
         for bullet in self.player.bullets:
@@ -286,11 +271,12 @@ class GameScene(Scene):
         '''
         if mlData.hitBoxStatus== True:
             for bulletCoord in self.agent.state.bulletCoord:
-                pygame.draw.circle(screen, (0,255,0),(bulletCoord[0],bulletCoord[1]),10)
+                pygame.draw.circle(screen, (0,100,0),(bulletCoord[0],bulletCoord[1]),10)
 
             for enemyCoord in self.agent.state.enemyCoord:
-                pygame.draw.circle(screen, (0,0,255),enemyCoord,20)
-
+                pygame.draw.circle(screen, (0,0,100),enemyCoord,20)
+            
+            pygame.draw.line(screen,mlData.enemyLineColor,(0,mlData.enemyLine),(700,mlData.enemyLine))
             #pygame.draw.circle(screen, (0,0,255),self.player.position.coords,mlData.proxyRange)
 
         for item in self.items:

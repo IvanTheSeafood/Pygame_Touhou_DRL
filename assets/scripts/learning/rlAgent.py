@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as nnFunc
-
+import pygame
 
 class agent:
     def __init__(self,player):
@@ -31,37 +31,40 @@ class agent:
         self.episode = mlData.episode
 
         self.time = 0
-        self.deathTime = -5
-        
+        self.timeDeath = -5
+        self.timeUpdate = 0
+        self.timeDumb = 0
         self.q = QNet
- 
+        #self.targetQ = QTrain
         self.ring = None
 
     def selectAction(self):                     #Select action based on NN
         
-        #explore n greedy
-        '''
-        self.qList = self.q(self.state).detach().numpy()    #Do NN
-        if np.random.rand()>mlData.epsilon:                   #Explore vs Exploit (or something)
-            self.action[0]=np.argmax(self.qList)
-            bestActions =[i for i, j in enumerate(self.qList) if j ==max(self.qList)]   #OG tiebreaker
-            self.action[0]=np.random.choice(bestActions)
+        if mlData.status:
+            #Softmax
+            actionProb = nnFunc.softmax(self.q(self.state))
+            self.action[0]=torch.multinomial(actionProb, num_samples=1).item()
+            self.action[1]=True
         else:
-            self.action[0]=np.random.randint(0,8)
-    
-        self.action[1]=True
-        self.pedictQ = self.qList[self.action[0]]
-        '''
-        #Softmax
-        actionProb = nnFunc.softmax(self.q(self.state))
-        self.action[0]=torch.multinomial(actionProb, num_samples=1).item()
-        self.action[1]=True
+            self.action = self.getKeyPress()
 
         print('Episode: {}, Time:{}, Position: [{}, {}], Action: {}, Kill Count: {}, Reward: {}'.format(mlData.episode, round(self.time,2), int(self.player.position.coords[0]), int(self.player.position.coords[1]), self.action[0], mlData.killTotal, round(mlData.rewardTotal,2), '                    '), end ='\r')
 
         return self.moveDirection(self.action)
     
-    def moveDirection(self, action=[4, False]): #Translate action integers into pygame language of vectors
+    def getKeyPress(self):
+            action = 4
+            if pygame.key.get_pressed()[pygame.K_UP]:
+                action -= 3
+            if pygame.key.get_pressed()[pygame.K_DOWN]:
+                action += 3
+            if pygame.key.get_pressed()[pygame.K_LEFT]:
+                action -= 1
+            if pygame.key.get_pressed()[pygame.K_RIGHT]:
+                action += 1
+            return action,True
+    
+    def moveDirection(self, action=[4,True]): #Translate action integers into pygame language of vectors
  
         #Moving
         finalMove =[Vector2.up() + Vector2.left(),   Vector2.up(),   Vector2.up() + Vector2.right(),
@@ -71,7 +74,7 @@ class agent:
         #Shooting
         if action[1] == True:
             self.player.shoot()
-            
+  
         return finalMove[action[0]]
     
     def returnR(self,data=mlData):  #not working: dead and score counter
@@ -87,7 +90,7 @@ class agent:
         if self.player.hp < data.oldHp: #damaged
             data.oldHp = self.player.hp
             self.reward -=1000
-            self.deathTime = self.time
+            self.timeDeath = self.time
         elif self.player.hp > data.oldHp:   #healitem
             data.oldHp = self.player.hp
 
@@ -95,11 +98,20 @@ class agent:
             data.kill = 0
         data.killTotal += data.kill
 
-        survivalBonus = self.time-self.deathTime -5
+        survivalBonus = self.time-self.timeDeath -5
         if survivalBonus<0:
             survivalBonus = 0
 
-        self.reward += data.kill*(1+(self.player.power - 2.4)*1)*100 + 0.02*survivalBonus
+        if self.state.playerCoord[1]> mlData.enemyLine:     #agent keeps going top left corner thinking it's a good strategy.  (SPOILER: it's not)
+            mlData.enemyLineColor = (0,125,255)
+            self.timeDumb=self.time
+        else:
+            mlData.enemyLineColor = (255,255,0)
+            survivalBonus = 0
+
+        firePenalty = self.time - self.timeDumb
+
+        self.reward += data.kill*100 + 0.02*survivalBonus - 0.1*firePenalty
         #if data.kill > 0:
             #print(data.killTotal, end = '\r')
         data.kill = 0
@@ -117,13 +129,15 @@ class agent:
         if len(mlData.replay)>=mlData.batchTotal:
                 mlData.batch = random.sample(mlData.replay, mlData.batchTotal)
 
+    def updateQtarget(self):
+        pass
+
     def reviewAction(self):
         data = mlData
         targetQTensor=self.q(self.state).detach().numpy()
         predictQ=targetQTensor[self.action[0]]
 
         targetQ = predictQ + data.alpha * (self.reward + data.gamma*np.max(self.q(self.newState).detach().numpy())-predictQ)
-
         
         targetQTensor[self.action[0]]=targetQ
         targetQTensor=torch.tensor(targetQTensor, dtype=torch.float32)  #keep the outputshapes intact
@@ -155,10 +169,8 @@ class agentState:
         self.time = 0
         self.playerCoord = player.position.coords
 
-        #self.enemyPos = []
         self.enemyCoord = [mlData.emptyCoord]*mlData.maxEnemies
 
-        #self.bulletPos = []
         self.bulletCoord = [mlData.emptyCoord]*mlData.maxBullets
 
         self.bulletAngle = [0]*mlData.maxBullets
@@ -188,6 +200,8 @@ class agentState:
     def updateEnemy(self, enemy, i):
         if i < mlData.maxEnemies:
             self.enemyCoord[i] = enemy.position.coords
+            if mlData.enemyLine< enemy.position.coords[1] and enemy.position.coords[1]<500:
+                mlData.enemyLine= enemy.position.coords[1]
         else:
             pass
 
@@ -237,5 +251,19 @@ class QNetwork(nn.Module):
 
         return result
 
+class QTargetNetwork(nn.Module):
+    def __init__(self, input_size, output_size, hidden_size):
+        super(QTargetNetwork, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, output_size)
+    
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+    
 QNet = QNetwork(50)
+#QTrain = QTargetNetwork(50)
 print('nn start')

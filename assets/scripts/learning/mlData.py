@@ -19,6 +19,7 @@ emptyVector = np.array([-1,-1,0])
 emptyCoord = np.array([-1,-1])
 maxBullets = 70
 maxEnemies = 11
+
 oldPoints = 0
 points = 0
 oldHp = 4
@@ -29,11 +30,17 @@ survive = 0
 killTotal = 0
 waveTime = 7
 time = 0
+enemyLine = -1
+enemyLineColor = (0,125,255)
 
 replayMax = 10000
 replay = []
 batchTotal = 30
 batch = []
+
+dumbFuckPenalty = 0
+lastDeathCoord = [-1,-1]*4  #if agent keeps dying in same coord, we punish it more heavily for being a dumb fk
+deathCoord = []
 
 '''
 - game doesnt count kills during invincibility it seems, though its fair
