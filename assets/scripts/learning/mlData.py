@@ -1,14 +1,13 @@
 from assets.scripts.math_and_data.Vector2 import Vector2
 import numpy as np
 
-alpha = 0.2
-epsilon =0.1
-gamma = 0.9
+alpha = 0.4
+temperature =0.6        #the softmax version of epsilon
+gamma = 0.6
 
 status = True
 hitBoxStatus = True
 playSpeed = 1
-renderStatus =  True            #I think this variable is useless atm
 
 terminal = False
 episode = 0
@@ -19,19 +18,20 @@ emptyVector = np.array([-1,-1,0])
 emptyCoord = np.array([-1,-1])
 maxBullets = 70
 maxEnemies = 11
+difficulty = [True, 2]
+hp = 4
+proxyRange = 400
 
 oldPoints = 0
 points = 0
 oldHp = 4
-hp = 4
-proxyRange = 400
 kill = 0
 survive = 0
 killTotal = 0
-waveTime = 7
 time = 0
 enemyLine = -1
 enemyLineColor = (0,125,255)
+timeStep = 0
 
 replayMax = 10000
 replay = []
@@ -42,6 +42,7 @@ dumbFuckPenalty = 0
 deathCoord = []
 
 finalScoreArray = []
+QTargetStep = 1000
 '''
 - game doesnt count kills during invincibility it seems, though its fair
 Scores:

@@ -28,21 +28,25 @@ class agent:
         mlData.oldPoints = 0
         mlData.killTotal = 0
         mlData.survive = 0
+        mlData.timeStep = 0
         self.episode = mlData.episode
 
         self.time = 0
         self.timeDeath = -5
-        self.timeUpdate = 0
         self.timeDumb = 0
         self.q = QNet
-        #self.targetQ = QTrain
+        self.qTarget = QTrain
         self.ring = None
 
     def selectAction(self):                     #Select action based on NN
         
         if mlData.status:
+            if self.state.enemyCoord[0][0] == mlData.emptyCoord[0] and self.state.enemyCoord[0][1] == mlData.emptyCoord[1]: #no enemies on map
+                dynaTemp = 0.8
+            else:
+                dynaTemp = mlData.temperature
             #Softmax
-            actionProb = nnFunc.softmax(self.q(self.state))
+            actionProb = nnFunc.softmax(self.q(self.state)/dynaTemp)
             self.action[0]=torch.multinomial(actionProb, num_samples=1).item()
             self.action[1]=True
         else:
@@ -98,9 +102,7 @@ class agent:
             data.kill = 0
         data.killTotal += data.kill
 
-        survivalBonus = self.time-self.timeDeath -5
-        if survivalBonus<0:
-            survivalBonus = 0
+        survivalBonus = self.time-self.timeDeath
 
         if self.state.playerCoord[1]> mlData.enemyLine:     #agent keeps going top left corner thinking it's a good strategy.  (SPOILER: it's not)
             mlData.enemyLineColor = (0,125,255)
@@ -110,11 +112,11 @@ class agent:
             survivalBonus = 0
 
         firePenalty = self.time - self.timeDumb
-
-        waveDetect = 0.1
         
-        if self.state.enemyCoord[0][0] == mlData.emptyCoord[0] and self.state.enemyCoord[0][1] == mlData.emptyCoord[1]:
-            waveDetect =  0.005
+        if self.state.enemyCoord[0][0] == mlData.emptyCoord[0] and self.state.enemyCoord[0][1] == mlData.emptyCoord[1]: #no enemies on map
+            waveDetect =  0.0005
+        else:
+            waveDetect = 0.01
 
         self.reward += data.kill*3 + waveDetect*survivalBonus - 0.1*firePenalty
         #if data.kill > 0:
@@ -135,14 +137,14 @@ class agent:
                 mlData.batch = random.sample(mlData.replay, mlData.batchTotal)
 
     def updateQtarget(self):
-        pass
+        self.qTarget.load_state_dict(self.q.state_dict())
 
     def reviewAction(self):
         data = mlData
         targetQTensor=self.q(self.state).detach().numpy()
         predictQ=targetQTensor[self.action[0]]
 
-        targetQ = predictQ + data.alpha * (self.reward + data.gamma*np.max(self.q(self.newState).detach().numpy())-predictQ)
+        targetQ = predictQ + data.alpha * (self.reward + data.gamma*np.max(self.qTarget(self.newState).detach().numpy())-predictQ)
         
         targetQTensor[self.action[0]]=targetQ
         targetQTensor=torch.tensor(targetQTensor, dtype=torch.float32)  #keep the outputshapes intact
@@ -250,20 +252,7 @@ class QNetwork(nn.Module):
             result.append(state.bulletAngle[j])
 
         return result
-
-class QTargetNetwork(nn.Module):
-    def __init__(self, input_size, output_size, hidden_size):
-        super(QTargetNetwork, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.fc3 = nn.Linear(hidden_size, output_size)
     
-    def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-    
-QNet = QNetwork(50)
-#QTrain = QTargetNetwork(50)
+QNet = QNetwork(20)
+QTrain = QNetwork(20)
 print('nn start')

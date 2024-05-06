@@ -24,7 +24,7 @@ class GameScene(Scene):
     def __init__(self):
         super().__init__()
         self.GAME_ZONE = tuple(map(int, os.getenv("GAME_ZONE").split(', ')))
-        self.delta_time = 0.001
+        self.delta_time = 0.1 #0.001
 
         music_module.play_music("08.-Voile_-the-Magic-Library_1.wav")
 
@@ -38,6 +38,7 @@ class GameScene(Scene):
         self.font = pygame.font.Font(path_join("assets", "fonts", "DFPPOPCorn-W12.ttf"), 36)
 
         self.player = Player(0, self, mlData.hp)
+        self.agent = agent(self.player)
 
         self.enemy_bullets = []
         self.items = []
@@ -58,7 +59,6 @@ class GameScene(Scene):
 
         self.enemies = []
 
-        self.agent = agent(self.player)
         self.agent.terminal = False
         self.agent.time = self.time
         #self.agent.state = tuple(self.player.position.coords)
@@ -216,17 +216,19 @@ class GameScene(Scene):
 
         ebi=0
         self.agent.state.bulletCoord = [mlData.emptyCoord]*mlData.maxBullets
+        #print(len(self.enemy_bullets), end = ' ')
         for bullet in self.enemy_bullets:
         
             on_screen = bullet.move(delta_time)
-            if not on_screen:
+        
+            if not on_screen or (mlData.difficulty[0] and ebi//mlData.difficulty[1]):
                 self.enemy_bullets.remove(bullet)
             self.agent.newState.updateBullet(self.agent,bullet,ebi)
             ebi +=1
             
         self.agent.state.updateTime(self.time)
         self.player.update()
-        #1000 lins of code to update agent state above
+        #1000 lines of code to update agent state above
         #-------------------------------------------------------------------------------------------------
         #RL continues here:
         self.agent.newState.playerCoord= self.player.position.coords
@@ -234,12 +236,14 @@ class GameScene(Scene):
 
         self.agent.addReplay()
         
-        if self.agent.time - self.agent.timeUpdate >= 3:
+        if mlData.timeStep % mlData.QTargetStep:
             self.agent.updateQtarget()
 
         self.agent.reviewAction()
         
         self.agent.expReplay()
+        
+        mlData.timeStep
         #self.agent.state = self.agent.newState
 
 
