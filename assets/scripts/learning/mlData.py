@@ -39,7 +39,6 @@ batchTotal = 30
 batch = []
 
 dumbFuckPenalty = 0
-lastDeathCoord = [-1,-1]*4  #if agent keeps dying in same coord, we punish it more heavily for being a dumb fk
 deathCoord = []
 
 '''

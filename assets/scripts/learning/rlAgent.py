@@ -89,7 +89,7 @@ class agent:
 
         if self.player.hp < data.oldHp: #damaged
             data.oldHp = self.player.hp
-            self.reward -=1000
+            self.reward -=1
             self.timeDeath = self.time
         elif self.player.hp > data.oldHp:   #healitem
             data.oldHp = self.player.hp
@@ -116,7 +116,7 @@ class agent:
         if self.state.enemyCoord[0][0] == mlData.emptyCoord[0] and self.state.enemyCoord[0][1] == mlData.emptyCoord[1]:
             waveDetect =  0.005
 
-        self.reward += data.kill*100 + waveDetect*survivalBonus - 0.1*firePenalty
+        self.reward += data.kill*3 + waveDetect*survivalBonus - 0.1*firePenalty
         #if data.kill > 0:
             #print(data.killTotal, end = '\r')
         data.kill = 0
@@ -223,10 +223,8 @@ class QNetwork(nn.Module):
         
         # Define layers
         self.fc1 = nn.Linear(state_size+1, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, hidden_size-10)
-        self.fc3 = nn.Linear(hidden_size-10, int(hidden_size/2))
-        self.fc4 = nn.Linear(int(hidden_size/2), int(hidden_size/4))
-        self.fc5 = nn.Linear(int(hidden_size/4), self.outputSize)
+        self.fc2 = nn.Linear(hidden_size, int(hidden_size/2))
+        self.fc3 = nn.Linear(int(hidden_size/2), self.outputSize)
     
     def forward(self, state):
         state=self.fuseState(state)
@@ -235,10 +233,7 @@ class QNetwork(nn.Module):
         x = torch.relu(self.fc1(state))
         x = self.fc2(x)
         x = self.fc3(x)
-        x = self.fc4(x)
-        x = self.fc5(x)
 
-        #print(type(x),x)
         return x
      
     def fuseState(self, state,data=mlData):
