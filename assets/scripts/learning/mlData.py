@@ -41,6 +41,7 @@ batch = []
 dumbFuckPenalty = 0
 deathCoord = []
 
+finalScoreArray = []
 '''
 - game doesnt count kills during invincibility it seems, though its fair
 Scores:
