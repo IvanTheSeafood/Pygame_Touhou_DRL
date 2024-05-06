@@ -102,15 +102,14 @@ class agent:
             data.kill = 0
         data.killTotal += data.kill
 
-        survivalBonus = self.time-self.timeDeath
-
         if self.state.playerCoord[1]> mlData.enemyLine:     #agent keeps going top left corner thinking it's a good strategy.  (SPOILER: it's not)
             mlData.enemyLineColor = (0,125,255)
             self.timeDumb=self.time
         else:
             mlData.enemyLineColor = (255,255,0)
-            survivalBonus = 0
+            self.timeDeath = self.time
 
+        survivalBonus = self.time-self.timeDeath
         firePenalty = self.time - self.timeDumb
         
         if self.state.enemyCoord[0][0] == mlData.emptyCoord[0] and self.state.enemyCoord[0][1] == mlData.emptyCoord[1]: #no enemies on map
