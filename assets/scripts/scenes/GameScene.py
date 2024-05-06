@@ -2,7 +2,6 @@ import numpy as np
 import pygame
 from pygame.locals import *
 import json
-import random
 
 from assets.scripts.classes.game_logic.BulletData import BulletData
 from assets.scripts.classes.game_logic.Enemy import Enemy
@@ -61,6 +60,7 @@ class GameScene(Scene):
 
         self.agent = agent(self.player)
         self.agent.terminal = False
+        self.agent.time = self.time
         #self.agent.state = tuple(self.player.position.coords)
         self.agent.ring = Collider(mlData.proxyRange, self.player.position)
 
@@ -69,52 +69,28 @@ class GameScene(Scene):
             if evt.type == QUIT:
                 pygame.quit()
 
-        move_direction = Vector2.zero()
-        if self.agent.switch == False:
-            
-            if pygame.key.get_pressed()[pygame.K_UP]:
-                move_direction += Vector2.up()
-            if pygame.key.get_pressed()[pygame.K_DOWN]:
-                move_direction += Vector2.down()
-            if pygame.key.get_pressed()[pygame.K_LEFT]:
-                move_direction += Vector2.left()
-            if pygame.key.get_pressed()[pygame.K_RIGHT]:
-                move_direction += Vector2.right()
-
-            if pygame.key.get_pressed()[pygame.K_z]:
-                self.player.shoot()
-            decision = move_direction  
+        if  self.agent.initBool:
+            self.agent.initBool = False
         else:
-            if self.agent.terminal is False:
-                decision=self.agent.takeAction()
-                '''
-                TD method, not working
-                action = self.agent.chooseAction(self.agent.state)   #[random.randint(0,8),True]
-                self.agent.takeAction(action)
-                move_direction =self.agent.moveDirection
-                if self.agent.shoot == True:
-                    self.player.shoot()
-                r = self.agent.reviewAction(self.player)
-                newAction = self.agent.chooseAction(self.agent.newState)
-                self.agent.state = tuple(self.agent.state)
-                self.agent.newState = tuple(self.agent.newState)
-                self.agent.q[self.agent.state][action[0]] += mlData.alpha*(r +mlData.gamma*max(self.agent.q[self.agent.newState])-self.agent.q[self.agent.state][action[0]])
-                self.agent.updateQ()
-                self.agent.state = self.agent.newState
-                '''
-                #print(len(self.agent.q))
+            self.agent.state=mlData.replay[-1][1]
+
+        move_direction=self.agent.selectAction()
            
-        self.player.move(decision)
-        
+        self.player.move(move_direction)
+
+        '''
+        #True gamers don't slow down
         if pygame.key.get_pressed()[pygame.K_LSHIFT]:
             self.player.slow = True
         else:
             self.player.slow = False
+        '''
+
 
     def update(self, delta_time):
         self.delta_time = delta_time
         self.time += delta_time
-
+        self.agent.time = self.time
         self.agent.ring.update_position(self.player.position)
 
         if self.time >= self.level["length"]:
@@ -207,6 +183,7 @@ class GameScene(Scene):
 
         ei = 0    
         self.agent.state.enemyCoord = [mlData.emptyCoord]*mlData.maxEnemies 
+        mlData.enemyLine = -1
         for enemy in self.enemies:
             enemy.update()
             enemy.move()
@@ -240,21 +217,42 @@ class GameScene(Scene):
         ebi=0
         self.agent.state.bulletCoord = [mlData.emptyCoord]*mlData.maxBullets
         for bullet in self.enemy_bullets:
-            #print(bullet.position)
         
             on_screen = bullet.move(delta_time)
             if not on_screen:
                 self.enemy_bullets.remove(bullet)
             self.agent.newState.updateBullet(self.agent,bullet,ebi)
             ebi +=1
+            
+        self.agent.state.updateTime(self.time)
         self.player.update()
+        #1000 lins of code to update agent state above
+        #-------------------------------------------------------------------------------------------------
+        #RL continues here:
         self.agent.newState.playerCoord= self.player.position.coords
+        self.agent.returnR()
+
+        self.agent.addReplay()
+        
+        if self.agent.time - self.agent.timeUpdate >= 3:
+            self.agent.updateQtarget()
+
+        self.agent.reviewAction()
+        
+        self.agent.expReplay()
+        #self.agent.state = self.agent.newState
+
+
+
+#---------------------------------------------------------------------------------------------------------
+
+
 
     @render_fps
     def render(self, screen, clock):
         screen.fill((0, 0, 0), rect=GAME_ZONE)
 
-        self.agent.ring.visualise(screen,(255,0,0))
+        self.agent.ring.visualise(screen,(100,0,0))
         #
 
         for bullet in self.player.bullets:
@@ -273,11 +271,13 @@ class GameScene(Scene):
         '''
         if mlData.hitBoxStatus== True:
             for bulletCoord in self.agent.state.bulletCoord:
-                pygame.draw.circle(screen, (0,255,0),bulletCoord,10)
+                pygame.draw.circle(screen, (0,100,0),(bulletCoord[0],bulletCoord[1]),10)
 
             for enemyCoord in self.agent.state.enemyCoord:
-
-                pygame.draw.circle(screen, (0,0,255),enemyCoord,20)
+                pygame.draw.circle(screen, (0,0,100),enemyCoord,20)
+            
+            pygame.draw.line(screen,mlData.enemyLineColor,(0,mlData.enemyLine),(700,mlData.enemyLine))
+            #pygame.draw.circle(screen, (0,0,255),self.player.position.coords,mlData.proxyRange)
 
         for item in self.items:
             self.item_group.add(item.get_sprite())

@@ -11,29 +11,25 @@ screen = pygame.display.set_mode(SIZE, DOUBLEBUF, 16)
 clock = pygame.time.Clock()
 
 from assets.scripts.learning import mlData
-from assets.scripts.learning.rlAgent import RLProcess, QNetwork
 from assets.scripts.scenes.TitleScene import TitleScene
-active_scene = TitleScene()
+from assets.scripts.scenes.GameScene import GameScene
+
+if not mlData.status:
+    active_scene = TitleScene()
+else:
+    active_scene = GameScene()
 
 ticksLastFrame = pygame.time.get_ticks()
 
 delta_time = 1 / FPS
 
-qlnn = QNetwork(11) #size of hidden layer, whatever that means
-rlCode = RLProcess(active_scene,qlnn)
-
 while active_scene is not None:
     #print(active_scene)
     active_scene.process_input(pygame.event.get())  #game select action
-    active_scene.update(delta_time)                 #game take action
-    rlCode.reviewAction()                           #reinforcement learning voodoo
-    
+    active_scene.update(delta_time)                 #game take action 6
     active_scene.render(screen, clock)              #game render changes
     active_scene = active_scene.next
-    rlCode.updateState(active_scene)           #reinforcement learning state = new state stuff, also updates game scenes
-    #since gamescene is always rendered after something else, state is initialised here, right after the scene change instead of in front of the loop,
-    #as the scene changes, the agent class does __init__() to initialise state automatically, probably
     pygame.display.flip()
-    delta_time = clock.tick(FPS) / 1000*mlData.playSpeed #default 1000
+    delta_time = clock.tick(FPS) / 1000*mlData.playSpeed 
 
 db_module.close()
