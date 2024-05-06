@@ -111,9 +111,10 @@ class agent:
 
         firePenalty = self.time - self.timeDumb
 
-        waveDetect = 0.005
-        if self.state.enemyCoord[0] != mlData.emptyCoord:
-            waveDetect = 0.1
+        waveDetect = 0.1
+        
+        if self.state.enemyCoord[0][0] == mlData.emptyCoord[0] and self.state.enemyCoord[0][1] == mlData.emptyCoord[1]:
+            waveDetect =  0.005
 
         self.reward += data.kill*100 + waveDetect*survivalBonus - 0.1*firePenalty
         #if data.kill > 0:
