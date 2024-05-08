@@ -228,22 +228,22 @@ class GameScene(Scene):
             
         self.agent.state.updateTime(self.time)
         self.player.update()
+        self.agent.newState.playerCoord= self.player.position.coords
         #1000 lines of code to update agent state above
         #-------------------------------------------------------------------------------------------------
         #RL continues here:
-        self.agent.newState.playerCoord= self.player.position.coords
         self.agent.returnR()
 
         self.agent.addReplay()
         
-        if mlData.timeStep % mlData.QTargetStep:
+        if mlData.timeStep % mlData.QTargetStep == 0:
             self.agent.updateQtarget()
 
         self.agent.reviewAction()
         
         self.agent.expReplay()
         
-        mlData.timeStep
+        mlData.timeStep +=1
         #self.agent.state = self.agent.newState
 
 

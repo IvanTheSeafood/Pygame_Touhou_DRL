@@ -1,7 +1,7 @@
 from assets.scripts.classes.game_logic.Collider import Collider
 from assets.scripts.math_and_data.Vector2 import Vector2
 from assets.scripts.learning import mlData
-#from assets.scripts.classes.game_logic.Player import Player
+
 import numpy as np
 import random
 import math
@@ -42,7 +42,7 @@ class agent:
         
         if mlData.status:
             if self.state.enemyCoord[0][0] == mlData.emptyCoord[0] and self.state.enemyCoord[0][1] == mlData.emptyCoord[1]: #no enemies on map
-                dynaTemp = 0.8
+                dynaTemp = 0.9
             else:
                 dynaTemp = mlData.temperature
             #Softmax
@@ -52,7 +52,7 @@ class agent:
         else:
             self.action = self.getKeyPress()
 
-        print('Episode: {}, Time:{}, Position: [{}, {}], Action: {}, Kill Count: {}, Reward: {}'.format(mlData.episode, round(self.time,2), int(self.player.position.coords[0]), int(self.player.position.coords[1]), self.action[0], mlData.killTotal, round(mlData.rewardTotal,2), '                    '), end ='\r')
+        print('Episode: {}, Stage:{}, Time:{}, Position: [{}, {}], Action: {}, Kill Count: {}, Reward: {}           '.format(mlData.episode, mlData.difficulty, round(self.time,2), int(self.player.position.coords[0]), int(self.player.position.coords[1]), self.action[0], mlData.killTotal, round(mlData.rewardTotal,2)), end ='\r')
 
         return self.moveDirection(self.action)
     
@@ -93,7 +93,7 @@ class agent:
 
         if self.player.hp < data.oldHp: #damaged
             data.oldHp = self.player.hp
-            self.reward -=1
+            self.reward -=10
             self.timeDeath = self.time
         elif self.player.hp > data.oldHp:   #healitem
             data.oldHp = self.player.hp
@@ -113,13 +113,12 @@ class agent:
         firePenalty = self.time - self.timeDumb
         
         if self.state.enemyCoord[0][0] == mlData.emptyCoord[0] and self.state.enemyCoord[0][1] == mlData.emptyCoord[1]: #no enemies on map
-            waveDetect =  0.0005
+            waveDetect =  -0.0005
         else:
-            waveDetect = 0.01
+            waveDetect = -0.01
 
-        self.reward += data.kill*3 + waveDetect*survivalBonus - 0.1*firePenalty
-        #if data.kill > 0:
-            #print(data.killTotal, end = '\r')
+        self.reward += data.kill*5 + waveDetect*survivalBonus + (self.player.points - data.oldPoints)/10000
+
         data.kill = 0
         #print( self.reward, '(',self.player.hp,',', data.oldHp,')total = ',data.rewardTotal,'                                           ',end='\r')
         data.oldPoints = self.player.points
@@ -137,6 +136,7 @@ class agent:
 
     def updateQtarget(self):
         self.qTarget.load_state_dict(self.q.state_dict())
+        torch.save(self.qTarget.state_dict(),('QNetwork_'+mlData.version+'_Target.pth'))
 
     def reviewAction(self):
         data = mlData
@@ -150,6 +150,8 @@ class agent:
 
         loss = nn.MSELoss()(self.q(self.state), targetQTensor)
         loss.backward()
+
+        torch.save(self.q.state_dict(),('QNetwork_'+mlData.version+'_Online.pth'))
 
     def expReplay(self):
         for experience in mlData.batch:
@@ -174,6 +176,7 @@ class agentState:
         #self.playerPos=player.position
         self.time = 0
         self.playerCoord = player.position.coords
+        self.playerHp =player.hp
 
         self.enemyCoord = [mlData.emptyCoord]*mlData.maxEnemies
 
@@ -217,7 +220,7 @@ class agentState:
 
 class QNetwork(nn.Module):
     #search softMax
-    def __init__(self, hidden_size, state_size= (mlData.maxBullets)*3 + (mlData.maxEnemies + 1)*2, maxAction = 9):
+    def __init__(self, hidden_size, state_size= (mlData.maxBullets)*3 + (mlData.maxEnemies + 1)*2 +1, maxAction = 9):
         super(QNetwork, self).__init__()
         self.inputSize = state_size+1
         self.outputSize = maxAction
@@ -242,6 +245,7 @@ class QNetwork(nn.Module):
         result.append(state.time)
         result.append(state.playerCoord[0])
         result.append(state.playerCoord[1])
+        result.append(state.playerHp)
         for i in range(data.maxEnemies):
             result.append(state.enemyCoord[i][0])
             result.append(state.enemyCoord[i][1])
@@ -254,4 +258,34 @@ class QNetwork(nn.Module):
     
 QNet = QNetwork(20)
 QTrain = QNetwork(20)
-print('nn start')
+
+print('NN Start, Current Version:', mlData.version)
+
+if mlData.trainedNN:
+    version = 0
+    versionString = ''
+    try:
+        version = int(mlData.version[4])*10 + int(mlData.version[5])
+
+    except:
+        version = int(mlData.version[4]) -1
+
+    for i in range(4):
+        versionString+=mlData.version[i]
+   
+    versionStringOld = versionString
+    versionString += str(version)
+    versionStringOld += str(version-1)
+    print('loading NN version','QNetwork_'+versionString+'_Target.pth',':', end = ' ')
+
+    try:
+        QNet.load_state_dict(torch.load('QNetwork_'+versionString+'_Online.pth'))
+        QTrain.load_state_dict(torch.load('QNetwork_'+versionString+'_Target.pth'))
+        print('NN Located')
+    except FileNotFoundError:
+        try:
+            QNet.load_state_dict(torch.load('QNetwork_'+versionStringOld+'_Online.pth'))
+            QTrain.load_state_dict(torch.load('QNetwork_'+versionStringOld+'_Target.pth'))
+            print('Old NN Found')
+        except FileNotFoundError:
+            print('NN Failed')

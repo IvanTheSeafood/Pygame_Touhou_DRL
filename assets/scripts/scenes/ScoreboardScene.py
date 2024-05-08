@@ -39,6 +39,7 @@ class ScoreboardScene(Scene):
                     if diffUp<1:
                         diffUp = 1
                     mlData.difficulty[1] += diffUp
+
                 self.switch_to_game()
             else:
                 self.cursor = 0
