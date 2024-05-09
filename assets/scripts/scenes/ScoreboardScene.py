@@ -31,7 +31,6 @@ class ScoreboardScene(Scene):
                 
                 mlData.hp = 4
                 mlData.oldHp = 4
-                mlData.finalScoreArray.append(self.player.points)
                 print('Episode:', mlData.episode,"Difficulty:",mlData.difficulty[1], "Survival Time:",round(mlData.time,2),"Final Score:",self.player.points,"Final Kill Count:",mlData.killTotal, "Final Reward:",round(mlData.rewardTotal,2),'                      ')
                 mlData.episode += 1
                 if mlData.rewardTotal>=500:

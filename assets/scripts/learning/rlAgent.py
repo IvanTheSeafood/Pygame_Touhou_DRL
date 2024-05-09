@@ -2,6 +2,7 @@ from assets.scripts.classes.game_logic.Collider import Collider
 from assets.scripts.math_and_data.Vector2 import Vector2
 from assets.scripts.learning import mlData
 
+import matplotlib.pyplot as plt
 import numpy as np
 import random
 import math
@@ -23,6 +24,7 @@ class agent:
         self.reward = 0
         self.terminal = False
 
+        mlData.terminal = False
         mlData.rewardTotal = 0
         mlData.oldHp = 4
         mlData.oldPoints = 0
@@ -83,13 +85,27 @@ class agent:
     
     def returnR(self,data=mlData):  #not working: dead and score counter
         self.reward = 0
+        self.terminal = mlData.terminal
+
+        if not self.terminal:
+            mlData.terminalPoints = 0
+        else:
+            if self.player.hp<0:
+                mlData.terminalPoints = -25
+            else:
+                mlData.terminalPoints = 10
+
+            if len(mlData.finalScoreArray)>0:
+                if self.player.points>np.max(mlData.finalScoreArray) and self.player.hp>=0:
+                    mlData.terminalPoints = 20
+                    
+            mlData.finalScoreArray.append(self.player.points)
+
         #print(self.player.hp)
         if self.player.hp ==4:  #init
             data.oldHp = 4
             if data.rewardTotal <0:
                 data.rewardTotal = 0
-        elif self.player.hp <0:
-            self.terminal = True
 
         if self.player.hp < data.oldHp: #damaged
             data.oldHp = self.player.hp
@@ -117,7 +133,7 @@ class agent:
         else:
             waveDetect = -0.01
 
-        self.reward += data.kill*5 + waveDetect*survivalBonus + (self.player.points - data.oldPoints)/10000
+        self.reward += data.kill*5 + waveDetect*survivalBonus + (self.player.points - data.oldPoints)/10000 + mlData.terminalPoints
 
         data.kill = 0
         #print( self.reward, '(',self.player.hp,',', data.oldHp,')total = ',data.rewardTotal,'                                           ',end='\r')

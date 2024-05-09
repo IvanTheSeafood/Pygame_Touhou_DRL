@@ -13,7 +13,7 @@ from assets.scripts.math_and_data.Vector2 import Vector2
 from assets.scripts.classes.game_logic.AttackFunctions import AttackFunctions
 
 from assets.scripts.learning.rlAgent import agent
-from assets.scripts.learning import mlData
+from assets.scripts.learning import mlData, plotter
 
 from assets.scripts.math_and_data.enviroment import *
 
@@ -95,7 +95,7 @@ class GameScene(Scene):
 
         if self.time >= self.level["length"]:
             self.agent.terminal = True
-            self.player.switch_to_scoreboard()
+            #self.player.switch_to_scoreboard()
 
         if self.level_enemies and self.enemy_count < len(self.level_enemies):
             if self.time >= self.level_enemies[self.enemy_count]["time"]:
@@ -233,8 +233,6 @@ class GameScene(Scene):
         #-------------------------------------------------------------------------------------------------
         #RL continues here:
         self.agent.returnR()
-
-        #self.agent.addReplay()
         
         self.agent.addReplay()
         #self.agent.addPrioritizedReplay()
@@ -251,7 +249,12 @@ class GameScene(Scene):
         
         self.agent.expReplay()
         
-        mlData.timeStep +=1
+        if self.agent.terminal:
+            plotter.plot_highest_scores(mlData.finalScoreArray)
+            self.player.switch_to_scoreboard()
+            
+        else:
+            mlData.timeStep +=1
         #self.agent.state = self.agent.newState
 
 

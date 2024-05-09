@@ -45,6 +45,10 @@ deathCoord = []
 finalScoreArray = []
 QTargetStep = 1000
 
+terminalPoints = 0
+terminalLive=10
+terminalHighScore = 20
+terminalDeath = -25
 '''
 - game doesnt count kills during invincibility it seems, though its fair
 Scores:
