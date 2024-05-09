@@ -1,7 +1,7 @@
 from assets.scripts.math_and_data.Vector2 import Vector2
 import numpy as np
 
-version = "1.2.11"
+version = "1.2.12"
 mode = 'EDDQN'          #DQN, DDQN, EDDQN
 
 alpha = 0.01
