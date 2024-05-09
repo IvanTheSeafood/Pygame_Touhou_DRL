@@ -234,8 +234,16 @@ class GameScene(Scene):
         #RL continues here:
         self.agent.returnR()
 
-        self.agent.addReplay()
+        #self.agent.addReplay()
         
+        self.agent.addReplay()
+        #self.agent.addPrioritizedReplay()
+        #if len(mlData.buffer)>=mlData.batchTotal:
+        self.agent.reviewAction()
+        
+        self.agent.expReplay()
+        #self.agent.expReplay()
+
         if mlData.timeStep % mlData.QTargetStep == 0:
             self.agent.updateQtarget()
 

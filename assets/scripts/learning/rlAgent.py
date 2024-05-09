@@ -124,15 +124,36 @@ class agent:
         data.oldPoints = self.player.points
         data.rewardTotal += self.reward
         return self.reward
-    
+
     def addReplay(self):
 
         mlData.replay.append((self.state,self.newState,self.action,self.reward,self.terminal))  #Store exp into replay
         if len(mlData.replay)>mlData.replayMax:     #If too long, delete oldest replay
             mlData.replay.pop(0)
-        
+
         if len(mlData.replay)>=mlData.batchTotal:
                 mlData.batch = random.sample(mlData.replay, mlData.batchTotal)
+
+    def addPrioritizedReplay(self):
+        transition = self.state,self.newState,self.action,self.reward,self.terminal
+        max_priority = np.max(mlData.priorities) if mlData.buffer else 1.0
+        mlData.buffer.append(transition)
+        if len(mlData.buffer)>mlData.replayMax:
+            mlData.buffer.pop(0)
+        mlData.priorities[len(mlData.buffer) - 1] = max_priority
+
+    def samplePrioritizedBatch(self):
+        priorities = mlData.priorities[:len(mlData.buffer)]
+        probs = priorities ** mlData.beta / np.sum(priorities ** mlData.beta)
+        indices = np.random.choice(len(mlData.buffer), mlData.batchTotal, p=probs)
+        batch = [mlData.buffer[idx] for idx in indices]
+        weights = (len(mlData.buffer) * probs[indices]) ** (-mlData.beta)
+        weights /= np.max(weights)
+        return batch, indices, weights
+    
+    def updatePriorities(self, indices, tdError):
+        for idx, error in zip(indices, tdError):
+            mlData.priorities[idx] = (error + 1e-5) ** mlData.alpha
 
     def updateQtarget(self):
         self.qTarget.load_state_dict(self.q.state_dict())
@@ -144,7 +165,7 @@ class agent:
         predictQ=targetQTensor[self.action[0]]
 
         targetQ = predictQ + data.alpha * (self.reward + data.gamma*np.max(self.qTarget(self.newState).detach().numpy())-predictQ)
-        
+
         targetQTensor[self.action[0]]=targetQ
         targetQTensor=torch.tensor(targetQTensor, dtype=torch.float32)  #keep the outputshapes intact
 
