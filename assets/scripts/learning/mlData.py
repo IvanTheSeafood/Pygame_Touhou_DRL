@@ -2,16 +2,18 @@ from assets.scripts.math_and_data.Vector2 import Vector2
 import numpy as np
 
 version = "1.2.11"
-alpha = 0.01
+runMode = 'PDDQN'   #DQN, DDQN, EDDQN, PDDQN
+learnRate = 0.01
 temperature =0.5        #the softmax version of epsilon
 gamma = 0.9
 
 status = True
 hitBoxStatus = True
-trainedNN = True        #Loads a previously trained NN
+trainedNN = False        #Loads a previously trained NN
 
 terminal = False
 episode = 0
+epMax = 500
 rewardTotal = 0
 
 position : Vector2 = Vector2(0,0)
@@ -39,12 +41,23 @@ replay = []
 batchTotal = 30
 batch = []
 
+model={}
+PQueue=[]
+
 dumbFuckPenalty = 0
 deathCoord = []
 
 finalScoreArray = []
 QTargetStep = 1000
 
+terminalPoints = 0
+terminalDeath = -50
+terminalLive = 25
+
+priorities = np.zeros(replayMax, dtype=np.float32)
+buffer = []
+alpha =0.6
+beta =0.4
 '''
 - game doesnt count kills during invincibility it seems, though its fair
 Scores:

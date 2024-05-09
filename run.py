@@ -27,9 +27,9 @@ while active_scene is not None:
     #print(active_scene)
     active_scene.process_input(pygame.event.get())  #game select action
     active_scene.update(delta_time)                 #game take action 6
-    #active_scene.render(screen, clock)              #game render changes
+    active_scene.render(screen, clock)              #game render changes
     active_scene = active_scene.next
-    #pygame.display.flip()
+    pygame.display.flip()
     delta_time = clock.tick(FPS) / 1000
     #delta_time = 0.1
 db_module.close()

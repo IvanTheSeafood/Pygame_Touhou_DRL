@@ -66,13 +66,13 @@ class GameScene(Scene):
 
     def process_input(self, events):
         for evt in events:
-            if evt.type == QUIT:
+            if evt.type == QUIT or mlData.episode >= mlData.epMax:
                 pygame.quit()
 
         if  self.agent.initBool:
             self.agent.initBool = False
         else:
-            self.agent.state=mlData.replay[-1][1]
+            self.agent.state=mlData.buffer[-1][1]
 
         move_direction=self.agent.selectAction()
            
@@ -94,8 +94,11 @@ class GameScene(Scene):
         self.agent.ring.update_position(self.player.position)
 
         if self.time >= self.level["length"]:
-            self.agent.terminal = True
-            self.player.switch_to_scoreboard()
+            mlData.terminal = True
+            mlData.terminalPoints = mlData.terminalLive
+            #self.player.switch_to_scoreboard()
+
+        self.agent.terminal = mlData.terminal
 
         if self.level_enemies and self.enemy_count < len(self.level_enemies):
             if self.time >= self.level_enemies[self.enemy_count]["time"]:
@@ -234,15 +237,20 @@ class GameScene(Scene):
         #RL continues here:
         self.agent.returnR()
 
-        self.agent.addReplay()
+        #self.agent.addReplay()
         
+        self.agent.addPrioritizedReplay()
+        if len(mlData.buffer)>=mlData.batchTotal:
+            self.agent.reviewAction()
+        
+        #self.agent.expReplay()
+
         if mlData.timeStep % mlData.QTargetStep == 0:
             self.agent.updateQtarget()
 
-        self.agent.reviewAction()
-        
-        self.agent.expReplay()
-        
+        if self.agent.terminal:
+            self.player.switch_to_scoreboard()
+
         mlData.timeStep +=1
         #self.agent.state = self.agent.newState
 

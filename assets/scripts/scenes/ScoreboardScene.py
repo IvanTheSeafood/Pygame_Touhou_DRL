@@ -34,10 +34,8 @@ class ScoreboardScene(Scene):
                 mlData.finalScoreArray.append(self.player.points)
                 print('Episode:', mlData.episode,"Difficulty:",mlData.difficulty[1], "Survival Time:",round(mlData.time,2),"Final Score:",self.player.points,"Final Kill Count:",mlData.killTotal, "Final Reward:",round(mlData.rewardTotal,2),'                      ')
                 mlData.episode += 1
-                if mlData.rewardTotal>=500:
-                    diffUp = int(mlData.rewardTotal/1000)
-                    if diffUp<1:
-                        diffUp = 1
+                if mlData.rewardTotal>=200 and mlData.time>=64.5 and mlData.difficulty[1]<=100:
+                    diffUp = 5
                     mlData.difficulty[1] += diffUp
 
                 self.switch_to_game()
