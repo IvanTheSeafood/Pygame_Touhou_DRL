@@ -24,7 +24,7 @@ class GameScene(Scene):
     def __init__(self):
         super().__init__()
         self.GAME_ZONE = tuple(map(int, os.getenv("GAME_ZONE").split(', ')))
-        self.delta_time = 0.1 #0.001
+        self.delta_time = 0.001 #0.001
 
         music_module.play_music("08.-Voile_-the-Magic-Library_1.wav")
 
@@ -68,6 +68,8 @@ class GameScene(Scene):
         for evt in events:
             if evt.type == QUIT:
                 pygame.quit()
+        if self.agent.episode>mlData.epMax:
+            pygame.quit()
 
         if  self.agent.initBool:
             self.agent.initBool = False
@@ -246,14 +248,9 @@ class GameScene(Scene):
         if mlData.timeStep % mlData.QTargetStep == 0:
             self.agent.updateQtarget()
 
-        self.agent.reviewAction()
-        
-        self.agent.expReplay()
-        
         if self.agent.terminal:
             plotter.plot_highest_scores(mlData.finalScoreArray)
-            self.player.switch_to_scoreboard()
-            
+            self.player.switch_to_scoreboard()    
         else:
             mlData.timeStep +=1
         #self.agent.state = self.agent.newState

@@ -3,6 +3,7 @@ import numpy as np
 
 version = "1.2.12"
 mode = 'EDDQN'          #DQN, DDQN, EDDQN
+epMax = 3     #max no of episodes before the code ends
 
 alpha = 0.01
 temperature =0.5        #the softmax version of epsilon
@@ -13,7 +14,7 @@ hitBoxStatus = True
 trainedNN = True        #Loads a previously trained NN
 
 terminal = False
-episode = 0
+episode = 1             #currnt episode (init)
 rewardTotal = 0
 
 position : Vector2 = Vector2(0,0)
@@ -21,7 +22,7 @@ emptyVector = np.array([-1,-1,0])
 emptyCoord = np.array([-1,-1])
 maxBullets = 70
 maxEnemies = 11
-difficulty = [True, 10]
+difficulty = [True, 70]
 hp = 4
 proxyRange = 400
 
@@ -41,7 +42,6 @@ replay = []
 batchTotal = 30
 batch = []
 
-dumbFuckPenalty = 0
 deathCoord = []
 
 rewardArray = []
@@ -49,9 +49,7 @@ finalScoreArray = []
 QTargetStep = 1000
 
 terminalPoints = 0
-terminalLive=10
-terminalHighScore = 20
-terminalDeath = -25
+
 '''
 - game doesnt count kills during invincibility it seems, though its fair
 Scores:

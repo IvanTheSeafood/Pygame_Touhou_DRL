@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-
+from assets.scripts.learning import mlData
 
 def plot_scores(episode_scores, episode_number):
     # Plot scores for the episode
@@ -12,6 +12,7 @@ def plot_scores(episode_scores, episode_number):
     plt.grid(True)
     plt.legend()  # Display legend with automatically generated labels
     plt.pause(0.001)  # Pause briefly to update the plot
+    plt.savefig(mlData.version+'Total Reward vs Time Step.png')
 
 def plot_highest_scores(scores):
     plt.figure(2)  # Set the figure number to 2
@@ -19,8 +20,8 @@ def plot_highest_scores(scores):
     plt.plot(episodes, scores, marker='x', linestyle='None', markersize=10)
 
     # Add a tag for each point indicating the episode number
-    for i, score in enumerate(scores, start=1):
-        plt.text(i, score, f'Episode {i}', ha='center', va='bottom')
+    #for i, score in enumerate(scores, start=1):
+        #plt.text(i, score, f'Episode {i}', ha='center', va='bottom')
 
     plt.plot(episodes, scores, marker='', linestyle='-')
 
@@ -30,3 +31,4 @@ def plot_highest_scores(scores):
     plt.grid(True)
     plt.legend()  # Display legend with automatically generated labels
     plt.pause(0.001)  # Pause briefly to update the plot
+    plt.savefig(mlData.version+'Highest Score After Each Episode.png')
