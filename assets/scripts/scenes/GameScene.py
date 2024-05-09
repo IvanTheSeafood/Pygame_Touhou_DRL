@@ -94,7 +94,7 @@ class GameScene(Scene):
         self.agent.ring.update_position(self.player.position)
 
         if self.time >= self.level["length"]:
-            self.agent.terminal = True
+            mlData.terminal = True
             #self.player.switch_to_scoreboard()
 
         if self.level_enemies and self.enemy_count < len(self.level_enemies):
@@ -234,13 +234,14 @@ class GameScene(Scene):
         #RL continues here:
         self.agent.returnR()
         
-        self.agent.addReplay()
-        #self.agent.addPrioritizedReplay()
-        #if len(mlData.buffer)>=mlData.batchTotal:
+        if mlData.mode == 'EDDQN':
+            self.agent.addReplay()
+
         self.agent.reviewAction()
         
-        self.agent.expReplay()
-        #self.agent.expReplay()
+        if mlData.mode == 'EDDQN':
+            self.agent.expReplay()
+
 
         if mlData.timeStep % mlData.QTargetStep == 0:
             self.agent.updateQtarget()

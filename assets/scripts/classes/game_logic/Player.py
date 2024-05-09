@@ -96,7 +96,8 @@ class Player(Entity):
 
             # If no HP left
             if self.hp < 0 and self.position.y() <= GAME_ZONE[3] + GAME_ZONE[1] + 40:
-                self.switch_to_scoreboard()
+                mlData.terminal = True
+                #self.switch_to_scoreboard()
 
             if self.position.y() <= GAME_ZONE[3] + GAME_ZONE[1] - 100:
                 self.reviving = False

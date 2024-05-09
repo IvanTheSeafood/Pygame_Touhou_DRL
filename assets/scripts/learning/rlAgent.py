@@ -98,7 +98,7 @@ class agent:
             if len(mlData.finalScoreArray)>0:
                 if self.player.points>np.max(mlData.finalScoreArray) and self.player.hp>=0:
                     mlData.terminalPoints = 20
-                    
+
             mlData.finalScoreArray.append(self.player.points)
 
         #print(self.player.hp)
@@ -126,7 +126,6 @@ class agent:
             self.timeDeath = self.time
 
         survivalBonus = self.time-self.timeDeath
-        firePenalty = self.time - self.timeDumb
         
         if self.state.enemyCoord[0][0] == mlData.emptyCoord[0] and self.state.enemyCoord[0][1] == mlData.emptyCoord[1]: #no enemies on map
             waveDetect =  -0.0005
@@ -173,22 +172,29 @@ class agent:
 
     def updateQtarget(self):
         self.qTarget.load_state_dict(self.q.state_dict())
-        torch.save(self.qTarget.state_dict(),('QNetwork_'+mlData.version+'_Target.pth'))
+        try:
+            torch.save(self.qTarget.state_dict(),('QNetwork_'+mlData.version+'_Target.pth'))
+        except:
+            pass
 
     def reviewAction(self):
         data = mlData
         targetQTensor=self.q(self.state).detach().numpy()
         predictQ=targetQTensor[self.action[0]]
-
-        targetQ = predictQ + data.alpha * (self.reward + data.gamma*np.max(self.qTarget(self.newState).detach().numpy())-predictQ)
+        if data.mode == 'DQN':
+            targetQ = predictQ + data.alpha * (self.reward + data.gamma*np.max(self.q(self.newState).detach().numpy())-predictQ)
+        else:
+            targetQ = predictQ + data.alpha * (self.reward + data.gamma*np.max(self.qTarget(self.newState).detach().numpy())-predictQ)
 
         targetQTensor[self.action[0]]=targetQ
         targetQTensor=torch.tensor(targetQTensor, dtype=torch.float32)  #keep the outputshapes intact
 
         loss = nn.MSELoss()(self.q(self.state), targetQTensor)
         loss.backward()
-
-        torch.save(self.q.state_dict(),('QNetwork_'+mlData.version+'_Online.pth'))
+        try:
+            torch.save(self.q.state_dict(),('QNetwork_'+mlData.version+'_Online.pth'))
+        except:
+            pass
 
     def expReplay(self):
         for experience in mlData.batch:

@@ -2,6 +2,8 @@ from assets.scripts.math_and_data.Vector2 import Vector2
 import numpy as np
 
 version = "1.2.11"
+mode = 'EDDQN'          #DQN, DDQN, EDDQN
+
 alpha = 0.01
 temperature =0.5        #the softmax version of epsilon
 gamma = 0.9
