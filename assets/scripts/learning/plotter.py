@@ -12,7 +12,7 @@ def plot_scores(episode_scores, episode_number):
     plt.grid(True)
     plt.legend()  # Display legend with automatically generated labels
     plt.pause(0.001)  # Pause briefly to update the plot
-    plt.savefig(mlData.version+'Total Reward vs Time Step.png')
+    plt.savefig(mlData.version+'_'+mlData.mode+'Total Reward vs Time Step.png')
 
 def plot_highest_scores(scores):
     plt.figure(2)  # Set the figure number to 2
@@ -31,4 +31,4 @@ def plot_highest_scores(scores):
     plt.grid(True)
     plt.legend()  # Display legend with automatically generated labels
     plt.pause(0.001)  # Pause briefly to update the plot
-    plt.savefig(mlData.version+'Highest Score After Each Episode.png')
+    plt.savefig(mlData.version+'_'+mlData.mode+'Highest Score After Each Episode.png')

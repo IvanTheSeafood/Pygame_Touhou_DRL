@@ -1,8 +1,8 @@
 from assets.scripts.math_and_data.Vector2 import Vector2
 import numpy as np
 
-version = "1.2.13"
-mode = 'PDDQN'          #DQN, DDQN, EDDQN
+version = "1.2.14"
+mode = 'DQN'          #DQN, DDQN, EDDQN
 epMax = 100     #max no of episodes before the code ends
 
 alpha = 0.01
