@@ -10,7 +10,7 @@ from assets.scripts.classes.hud_and_rendering.SelectButtonMatrix import SelectBu
 from assets.scripts.math_and_data.Vector2 import Vector2
 from assets.scripts.math_and_data.enviroment import WIDTH, HEIGHT, db_module, music_module
 from assets.scripts.math_and_data.functions import clamp
-from assets.scripts.learning import mlData
+from assets.scripts.learning import mlData,plotter
 
 class ScoreboardScene(Scene):
     def __init__(self, player: Player = None):
@@ -31,6 +31,7 @@ class ScoreboardScene(Scene):
                 
                 mlData.hp = 4
                 mlData.oldHp = 4
+                plotter.plot_scores(mlData.rewardArray, mlData.episode)
                 print('Episode:', mlData.episode,"Difficulty:",mlData.difficulty[1], "Survival Time:",round(mlData.time,2),"Final Score:",self.player.points,"Final Kill Count:",mlData.killTotal, "Final Reward:",round(mlData.rewardTotal,2),'                      ')
                 mlData.episode += 1
                 if mlData.rewardTotal>=500:

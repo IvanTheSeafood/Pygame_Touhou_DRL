@@ -44,6 +44,7 @@ batch = []
 dumbFuckPenalty = 0
 deathCoord = []
 
+rewardArray = []
 finalScoreArray = []
 QTargetStep = 1000
 

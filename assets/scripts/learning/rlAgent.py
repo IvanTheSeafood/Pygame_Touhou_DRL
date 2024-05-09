@@ -24,6 +24,7 @@ class agent:
         self.reward = 0
         self.terminal = False
 
+        mlData.rewardArray=[]
         mlData.terminal = False
         mlData.rewardTotal = 0
         mlData.oldHp = 4
@@ -133,11 +134,12 @@ class agent:
             waveDetect = -0.01
 
         self.reward += data.kill*5 + waveDetect*survivalBonus + (self.player.points - data.oldPoints)/10000 + mlData.terminalPoints
-
-        data.kill = 0
+        
+        mlData.kill = 0
         #print( self.reward, '(',self.player.hp,',', data.oldHp,')total = ',data.rewardTotal,'                                           ',end='\r')
-        data.oldPoints = self.player.points
-        data.rewardTotal += self.reward
+        mlData.oldPoints = self.player.points
+        mlData.rewardTotal += self.reward
+        mlData.rewardArray.append(mlData.rewardTotal)
         return self.reward
 
     def addReplay(self):
