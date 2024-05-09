@@ -151,26 +151,48 @@ class agent:
         if len(mlData.replay)>=mlData.batchTotal:
                 mlData.batch = random.sample(mlData.replay, mlData.batchTotal)
 
-    def addPrioritizedReplay(self):
-        transition = self.state,self.newState,self.action,self.reward,self.terminal
-        max_priority = np.max(mlData.priorities) if mlData.buffer else 1.0
-        mlData.buffer.append(transition)
-        if len(mlData.buffer)>mlData.replayMax:
-            mlData.buffer.pop(0)
-        mlData.priorities[len(mlData.buffer) - 1] = max_priority
+    def addTransition(self):  #9-10
+        max_priority = max(max(mlData.priorities), 1.0)  # Ensure priorities are non-zero
+        priority = max_priority
+        mlData.bufferP.append((self.state,self.newState,self.action,self.reward,self.terminal,priority))
+        if len(mlData.bufferP)>mlData.replayMax:     #If too long, delete oldest replay
+            mlData.replay.pop(0)
 
-    def samplePrioritizedBatch(self):
-        priorities = mlData.priorities[:len(mlData.buffer)]
-        probs = priorities ** mlData.beta / np.sum(priorities ** mlData.beta)
-        indices = np.random.choice(len(mlData.buffer), mlData.batchTotal, p=probs)
-        batch = [mlData.buffer[idx] for idx in indices]
-        weights = (len(mlData.buffer) * probs[indices]) ** (-mlData.beta)
-        weights /= np.max(weights)
-        return batch, indices, weights
+    def sampleMiniBatch(self):
+    # Extract priorities from the replay memory
+        priorities = np.array(mlData.priorities[:len(mlData.bufferP)])
     
-    def updatePriorities(self, indices, tdError):
-        for idx, error in zip(indices, tdError):
-            mlData.priorities[idx] = (error + 1e-5) ** mlData.alpha
+    # Calculate probabilities for sampling based on priorities
+        probs = priorities ** mlData.alphaP
+        probs /= np.sum(probs)
+ 
+        indices = np.random.choice(len(mlData.bufferP), size=mlData.batchPSize, p=probs)
+        minibatch = [mlData.bufferP[idx] for idx in indices]
+    
+        return minibatch, indices
+    
+    def updatePriorities(self, batch, indexArray): #11-12
+        index = 0
+        losses=[]
+        for transition in batch:
+            qState = self.q(transition[0]).detach().numpy()
+            qAction = qState[transition[2][0]]
+            if not transition[4]:
+                tdError = abs(transition[3] +mlData.gamma*np.max(self.qTarget(transition[1]).detach().numpy())-qAction)
+            else:
+                tdError = abs(transition[3])
+
+            mlData.priorities[indexArray[index]]= (tdError + mlData.temperature) ** mlData.alphaP
+
+            weightP = ((mlData.batchPSize*mlData.priorities[indexArray[index]])/(np.sum(mlData.priorities)))**mlData.betaP 
+
+            losses.append((transition[3] +mlData.gamma*np.max(self.qTarget(transition[1]).detach().numpy())-qAction)**2*weightP)
+            loss= torch.tensor(np.mean(losses),dtype=torch.float32, requires_grad = True)
+            loss.backward()
+            index +=1 
+            #self.updatePrioritizedQnet()
+        self.updateQtarget()
+        mlData.betaP =min(1.0, mlData.betaP + mlData.betaPIncrement)
 
     def updateQtarget(self):
         self.qTarget.load_state_dict(self.q.state_dict())

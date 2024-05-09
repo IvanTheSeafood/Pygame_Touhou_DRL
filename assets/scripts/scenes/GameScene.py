@@ -74,7 +74,10 @@ class GameScene(Scene):
         if  self.agent.initBool:
             self.agent.initBool = False
         else:
-            self.agent.state=mlData.replay[-1][1]
+            if mlData.mode =='EDDQN':
+                self.agent.state=mlData.replay[-1][1]
+            elif mlData.mode == 'PDDQN':
+                self.agent.state = mlData.bufferP[-1][1]
 
         move_direction=self.agent.selectAction()
            
@@ -239,21 +242,29 @@ class GameScene(Scene):
         if mlData.mode == 'EDDQN':
             self.agent.addReplay()
 
-        self.agent.reviewAction()
+        if mlData.mode == 'PDDQN':
+            self.agent.addTransition()  #9-10
+            miniBatch, miniBatchIndices = self.agent.sampleMiniBatch()
+            self.agent.updatePriorities(miniBatch, miniBatchIndices) #11-12
+
+        if mlData.mode != 'PDDQN':
+            self.agent.reviewAction()
         
         if mlData.mode == 'EDDQN':
             self.agent.expReplay()
-
 
         if mlData.timeStep % mlData.QTargetStep == 0:
             self.agent.updateQtarget()
 
         if self.agent.terminal:
             plotter.plot_highest_scores(mlData.finalScoreArray)
-            self.player.switch_to_scoreboard()    
+            self.player.switch_to_scoreboard() 
         else:
             mlData.timeStep +=1
-        #self.agent.state = self.agent.newState
+            mlData.betaP = min(1.0, mlData.betaP + mlData.betaPIncrement)
+
+        if mlData.mode == 'DQN' or mlData.mode == 'DDQN':
+            self.agent.state = self.agent.newState
 
 
 

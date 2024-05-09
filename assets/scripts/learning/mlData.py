@@ -1,9 +1,9 @@
 from assets.scripts.math_and_data.Vector2 import Vector2
 import numpy as np
 
-version = "1.2.12"
-mode = 'EDDQN'          #DQN, DDQN, EDDQN
-epMax = 3     #max no of episodes before the code ends
+version = "1.2.13"
+mode = 'PDDQN'          #DQN, DDQN, EDDQN
+epMax = 100     #max no of episodes before the code ends
 
 alpha = 0.01
 temperature =0.5        #the softmax version of epsilon
@@ -50,6 +50,13 @@ QTargetStep = 1000
 
 terminalPoints = 0
 
+alphaP = 0.6
+betaP = 0.4
+betaPIncrement = 0.01
+priorities=[1.0]*replayMax
+bufferP =[]
+bufferPSize = replayMax
+batchPSize= batchTotal
 '''
 - game doesnt count kills during invincibility it seems, though its fair
 Scores:
