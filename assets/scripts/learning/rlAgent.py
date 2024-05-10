@@ -156,7 +156,7 @@ class agent:
         priority = max_priority
         mlData.bufferP.append((self.state,self.newState,self.action,self.reward,self.terminal,priority))
         if len(mlData.bufferP)>mlData.replayMax:     #If too long, delete oldest replay
-            mlData.replay.pop(0)
+            mlData.bufferP.pop(0)
 
     def sampleMiniBatch(self):
     # Extract priorities from the replay memory

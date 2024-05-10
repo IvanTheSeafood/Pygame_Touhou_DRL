@@ -2,8 +2,8 @@ from assets.scripts.math_and_data.Vector2 import Vector2
 import numpy as np
 
 version = "1.2.14"
-mode = 'DQN'          #DQN, DDQN, EDDQN
-epMax = 100     #max no of episodes before the code ends
+mode = 'PDDQN'          #DQN, DDQN, EDDQN
+epMax = 300     #max no of episodes before the code ends
 
 alpha = 0.01
 temperature =0.5        #the softmax version of epsilon
